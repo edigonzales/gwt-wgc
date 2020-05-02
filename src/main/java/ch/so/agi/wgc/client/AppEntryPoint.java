@@ -72,7 +72,7 @@ public class AppEntryPoint implements EntryPoint {
                 .addBackgroundLayers(backgroundMapsConfig)
                 .build();
         
-        body().add(div().id("BackgroundSwitcher").add(span().textContent("Hintergrundkarten")));
+        body().add(div().id("BackgroundSwitcher").add(span().textContent("Hintergrundkarten")).add(div().add(span().textContent("fubar"))));
         
 
 //        // TODO
