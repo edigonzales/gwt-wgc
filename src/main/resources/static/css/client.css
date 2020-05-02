@@ -1,0 +1,148 @@
+body {
+    margin: 0px;
+    padding: 0px;
+    background: #fafafa; 
+}
+
+body, div {
+    /*font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;*/   
+    font-family: 'Fira Sans', Arial, sans-serif;   
+}
+
+#map {
+    height: 100%;
+}
+
+#BackgroundSwitcher {
+    border-radius: 3px;
+    background-color: white;
+    color: black;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 5px 0 rgba(0,0,0,0.16), 0 2px 10px 0 rgba(0,0,0,0.12);
+    position: absolute;
+    margin-top: 0px;
+    margin-left: 0px;
+    margin-bottom: 0px;
+    padding: 5px;
+    bottom: 10px;
+    right: 10px;
+    height: 75px; 
+}
+
+
+
+
+
+
+
+
+
+/* BigMapLink element */
+.bigMapLink {
+    background-color: white;
+    color: black;
+    box-shadow: 0 2px 5px 0 rgba(0,0,0,0.16), 0 2px 10px 0 rgba(0,0,0,0.12);
+    position: absolute;
+    margin-top: 0px;
+    margin-left: 0px;
+    margin-bottom: 0px;
+    top: 8px;
+    left: 8px;
+    height: 26px; 
+    overflow-y: auto;
+    max-width: 100%;
+    font-weight: bold;
+    font-size: 14px;
+    padding: 3px;
+    line-height: 20px;
+}
+  
+a.bigMapLink:hover {
+    color: black;
+    text-decoration: underline !important;
+}  
+
+a.bigMapLink:visited {
+    color: black; 
+    text-decoration: underline !important;
+}      
+
+
+
+
+
+
+
+#searchPanel {
+	margin-top: 200px;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 100%;    
+    width: 600px;
+    max-width: 100%;
+    background-color: #fafafa;
+
+    /*
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    */
+}
+
+.field-group input, .field-group textarea {
+    font-family: 'Fira Sans', sans-serif !important;   
+}
+
+#resultPanel {
+	margin-top: 20px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 600px;
+    max-width: 100%;  
+    background-color: white;    
+}
+
+#resultTabs div.flex-layout {
+    justify-content: center;
+    /*color: #2196F3;*/
+}
+
+
+
+
+.searchBoxContainer {
+	width: 100%;
+	/*
+    border-bottom: 0px solid #D9D9D9;
+    */
+}
+
+#tabsPanelContainer {
+    margin-left: auto;
+    margin-right: auto;
+
+}
+
+.nav-tabs {
+	border: none !important;
+}
+
+/*
+.nav-tabs.col-blue > li > a::before {
+	border-bottom-color: red !important;
+}
+*/
+
+.tabContainer {
+    margin-left: auto;
+    margin-right: auto;
+
+}
+
+
+.tab-content {
+/*	background-color: white;*/
+}
+
