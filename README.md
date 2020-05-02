@@ -24,5 +24,5 @@ BUILD_NUMBER=9999 mvn package
 
 ## Run
 ```
-docker run -p 8080:8080 sogis/wgc-embedded
+docker run -p 8080:8080 sogis/wgc
 ```
