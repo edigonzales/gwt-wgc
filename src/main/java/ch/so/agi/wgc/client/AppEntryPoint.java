@@ -6,10 +6,19 @@ import static org.jboss.elemento.Elements.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import org.dominokit.domino.ui.forms.SuggestBox.DropDownPositionDown;
+import org.dominokit.domino.ui.dropdown.DropDownMenu;
+import org.dominokit.domino.ui.dropdown.DropDownPosition;
+import org.dominokit.domino.ui.forms.SuggestBox;
+import org.dominokit.domino.ui.forms.SuggestBoxStore;
+import org.dominokit.domino.ui.forms.SuggestItem;
+import org.dominokit.domino.ui.icons.Icons;
 import org.dominokit.domino.ui.style.ColorScheme;
 import org.dominokit.domino.ui.themes.Theme;
+import org.dominokit.domino.ui.utils.HasSelectionHandler.SelectionHandler;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -22,22 +31,42 @@ import ch.so.agi.wgc.shared.BackgroundMapConfig;
 import ch.so.agi.wgc.shared.ConfigResponse;
 import ch.so.agi.wgc.shared.ConfigService;
 import ch.so.agi.wgc.shared.ConfigServiceAsync;
+import elemental2.core.Global;
+import elemental2.core.JsArray;
 import elemental2.dom.DomGlobal;
 import elemental2.dom.Element;
 import elemental2.dom.EventListener;
+import elemental2.dom.HTMLElement;
+import elemental2.core.Global;
+import elemental2.core.JsArray;
+import elemental2.core.JsString;
+import elemental2.core.JsNumber;
+import elemental2.dom.CSSProperties;
+import elemental2.dom.DomGlobal;
+import elemental2.dom.Event;
+import elemental2.dom.EventListener;
+import elemental2.dom.HTMLDivElement;
+import elemental2.dom.HTMLElement;
+import jsinterop.base.Js;
+import jsinterop.base.JsPropertyMap;
 import ol.Coordinate;
 import ol.Map;
 import ol.MapBrowserEvent;
 import ol.MapEvent;
-import ol.events.Event;
+//import ol.events.Event;
 import ol.layer.Tile;
+
+import static org.jboss.elemento.Elements.*;
+import static org.jboss.elemento.EventType.*;
+
 
 public class AppEntryPoint implements EntryPoint {
     private MyMessages messages = GWT.create(MyMessages.class);
     private final ConfigServiceAsync configService = GWT.create(ConfigService.class);
     
     private List<BackgroundMapConfig> backgroundMapsConfig;
-    
+    private String SEARCH_SERVICE_URL = "https://api3.geo.admin.ch/rest/services/api/SearchServer?sr=2056&limit=15&type=locations&origins=address,parcel&searchText=";
+
     private NumberFormat fmtDefault = NumberFormat.getDecimalFormat();
     private NumberFormat fmtPercent = NumberFormat.getFormat("#0.0");
     
@@ -65,7 +94,7 @@ public class AppEntryPoint implements EntryPoint {
     private void init() {      
         console.log("init");
         
-        Theme theme = new Theme(ColorScheme.WHITE);
+        Theme theme = new Theme(ColorScheme.RED);
         theme.apply();
 
         body().add(div().id(MAP_DIV_ID));
@@ -77,6 +106,106 @@ public class AppEntryPoint implements EntryPoint {
         
         body().add(new BackgroundSwitcher(map, backgroundMapsConfig));
         
+        HTMLElement searchCard = div().id("SearchBox").element();
+        body().add(searchCard);
+
+        HTMLElement logoDiv = div().id("logoDiv")
+                .add(img()
+                        .attr("src", GWT.getHostPageBaseURL() + "logo.png")
+                        .attr("alt", "Logo Kanton Solothurn").attr("width", "50%"))
+                .element();
+        searchCard.appendChild(logoDiv);
+
+        SuggestBoxStore dynamicStore = new SuggestBoxStore() {
+            @Override
+            public void filter(String value, SuggestionsHandler suggestionsHandler) {
+                if (value.trim().length() == 0) {
+                    return;
+                }
+                
+                // fetch(url, init) -> https://www.javadoc.io/doc/com.google.elemental2/elemental2-dom/1.0.0-RC1/elemental2/dom/RequestInit.html
+                // abort -> https://github.com/react4j/react4j-flux-challenge/blob/b9b28250fd3f954c690f874605f67e2a24a7274d/src/main/java/react4j/sithtracker/model/SithPlaceholder.java
+                DomGlobal.fetch(SEARCH_SERVICE_URL + value.trim().toLowerCase())
+                .then(response -> {
+                    if (!response.ok) {
+                        return null;
+                    }
+                    return response.text();
+                })
+                .then(json -> {
+                    List<SuggestItem<SearchResult>> suggestItems = new ArrayList<>();
+                    JsPropertyMap<?> parsed = Js.cast(Global.JSON.parse(json));
+                    JsArray<?> results = Js.cast(parsed.get("results"));
+                    for (int i = 0; i < results.length; i++) {
+                        JsPropertyMap<?> feature = Js.cast(results.getAt(i));
+                        JsPropertyMap<?> attrs = Js.cast(feature.get("attrs"));
+
+                        SearchResult searchResult = new SearchResult();
+                        searchResult.setLabel(((JsString) attrs.get("label")).normalize());
+                        searchResult.setOrigin(((JsString) attrs.get("origin")).normalize());
+                        searchResult.setBbox(((JsString) attrs.get("geom_st_box2d")).normalize());
+                        searchResult.setEasting(((JsNumber) attrs.get("y")).valueOf());
+                        searchResult.setNorthing(((JsNumber) attrs.get("x")).valueOf());
+                        
+//                      // TODO icon type depending on address and parcel ?
+                        SuggestItem<SearchResult> suggestItem = SuggestItem.create(searchResult, searchResult.getLabel(),
+                                Icons.ALL.place());
+                        suggestItems.add(suggestItem);
+                    }
+                    suggestionsHandler.onSuggestionsReady(suggestItems);
+                    return null;
+                }).catch_(error -> {
+                    console.log(error);
+                    return null;
+                });
+            }
+
+            @Override
+            public void find(Object searchValue, Consumer handler) {
+                if (searchValue == null) {
+                    return;
+                }
+                SearchResult searchResult = (SearchResult) searchValue;
+                SuggestItem<SearchResult> suggestItem = SuggestItem.create(searchResult, null);
+                handler.accept(suggestItem);
+            }
+        };
+
+        SuggestBox suggestBox = SuggestBox.create("Suche: Adressen und Orte", dynamicStore);
+        suggestBox.setIcon(Icons.ALL.search());
+        suggestBox.getInputElement().setAttribute("autocomplete", "off");
+        suggestBox.getInputElement().setAttribute("spellcheck", "false");
+        DropDownMenu suggestionsMenu = suggestBox.getSuggestionsMenu();
+        suggestionsMenu.setPosition(new DropDownPositionDown());
+        
+        suggestBox.addSelectionHandler(new SelectionHandler() {
+            @Override
+            public void onSelection(Object value) {
+//                loader.stop();
+//                resetGui();
+
+                SuggestItem<SearchResult> item = (SuggestItem<SearchResult>) value;
+                SearchResult result = (SearchResult) item.getValue();
+                
+                String[] coords = result.getBbox().substring(4,result.getBbox().length()-1).split(",");
+                String[] coordLL = coords[0].split(" ");
+                String[] coordUR = coords[1].split(" ");
+//                Extent extent = new Extent(Double.valueOf(coordLL[0]).doubleValue(), Double.valueOf(coordLL[1]).doubleValue(), 
+//                Double.valueOf(coordUR[0]).doubleValue(), Double.valueOf(coordUR[1]).doubleValue());
+//                
+//                double easting = Double.valueOf(result.getEasting()).doubleValue();
+//                double northing = Double.valueOf(result.getNorthing()).doubleValue();
+//                
+//                Coordinate coordinate = new Coordinate(easting, northing);
+//                sendCoordinateToServer(coordinate.toStringXY(3), null);
+                
+                // TODO: remove focus
+                // -> Tried a lot but failed. Ask the authors.
+            }
+        });
+
+        HTMLElement suggestBoxDiv = div().id("suggestBoxDiv").add(suggestBox).element();
+        searchCard.appendChild(suggestBoxDiv);
 
         
         
