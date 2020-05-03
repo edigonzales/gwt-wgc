@@ -29,6 +29,7 @@ import proj4.Proj4;
 
 public class WgcMapBuilder {
     private String BACKGROUND_LAYER_ATTR_NAME = "bgLayer";
+    private String THUMBNAIL_ATTR_NAME = "thumbnail";
     private String TITLE_ATTR_NAME = "title";
     private String ID_ATTR_NAME = "id";
     
@@ -62,7 +63,7 @@ public class WgcMapBuilder {
         this.baseUrlWms = baseUrlWms; 
         return this;
     }
-    
+     
     public WgcMapBuilder addBackgroundLayers(List<BackgroundMapConfig> backgroundMapsConfig) {        
         for (BackgroundMapConfig config : backgroundMapsConfig) {
             WmtsOptions wmtsOptions = OLFactory.createOptions();
@@ -89,6 +90,7 @@ public class WgcMapBuilder {
                 wmtsLayer.setVisible(false);
             }
             wmtsLayer.set(BACKGROUND_LAYER_ATTR_NAME, true);
+            wmtsLayer.set(THUMBNAIL_ATTR_NAME, config.getThumbnail());
             wmtsLayer.set(TITLE_ATTR_NAME, config.getTitle());
             wmtsLayer.set(ID_ATTR_NAME, config.getId());
             
@@ -97,7 +99,7 @@ public class WgcMapBuilder {
         return this;
     }
     
-    // TODO "everthing" must be configurable
+    // TODO "everything" must be configurable
     public WgcMap build() {        
         ViewOptions viewOptions = OLFactory.createOptions();
         viewOptions.setProjection(projection);

@@ -17,17 +17,20 @@ import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
+import ch.so.agi.wgc.client.element.BackgroundSwitcher;
 import ch.so.agi.wgc.shared.BackgroundMapConfig;
 import ch.so.agi.wgc.shared.ConfigResponse;
 import ch.so.agi.wgc.shared.ConfigService;
 import ch.so.agi.wgc.shared.ConfigServiceAsync;
 import elemental2.dom.DomGlobal;
 import elemental2.dom.Element;
+import elemental2.dom.EventListener;
 import ol.Coordinate;
 import ol.Map;
 import ol.MapBrowserEvent;
 import ol.MapEvent;
 import ol.events.Event;
+import ol.layer.Tile;
 
 public class AppEntryPoint implements EntryPoint {
     private MyMessages messages = GWT.create(MyMessages.class);
@@ -72,7 +75,10 @@ public class AppEntryPoint implements EntryPoint {
                 .addBackgroundLayers(backgroundMapsConfig)
                 .build();
         
-        body().add(div().id("BackgroundSwitcher").add(span().textContent("Hintergrundkarten")).add(div().add(span().textContent("fubar"))));
+        body().add(new BackgroundSwitcher(map, backgroundMapsConfig));
+        
+
+        
         
 
 //        // TODO

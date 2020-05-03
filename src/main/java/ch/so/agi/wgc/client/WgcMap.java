@@ -19,6 +19,7 @@ import ol.source.ImageWmsParams;
 
 public class WgcMap extends ol.Map {
     private String BACKGROUND_LAYER_ATTR_NAME = "bgLayer";
+    private String THUMBNAIL_ATTR_NAME = "thumbnail";    
     private String TITLE_ATTR_NAME = "title";
     private String ID_ATTR_NAME = "id";
 
@@ -27,6 +28,7 @@ public class WgcMap extends ol.Map {
     private String baseUrlBigMap;
         
     private String backgroundLayer;
+    private List<String> backgroundLayers = new ArrayList<String>();
     private List<String> foregroundLayers = new ArrayList<String>();
     private List<Double> foregroundLayerOpacities = new ArrayList<Double>();
     
@@ -45,6 +47,18 @@ public class WgcMap extends ol.Map {
         } else {
             DomGlobal.window.alert("Backgroundlayer '" + id + "' not found.");
         }
+    }
+    
+    public List<String> getBackgroundLayers() {
+        List<String> backgroundLayers = new ArrayList<String>();
+        ol.Collection<Base> layers = this.getLayers();
+        for (int i = 0; i < layers.getLength(); i++) {
+            Base item = layers.item(i);
+            if (item.get(THUMBNAIL_ATTR_NAME) != null) {
+                backgroundLayers.add(item.get(ID_ATTR_NAME));
+            }
+        }
+        return backgroundLayers;
     }
     
     public void addForegroundLayer(String id, double opacity) {
@@ -120,7 +134,7 @@ public class WgcMap extends ol.Map {
     }
     
     // Get Openlayers map layer by id.
-    private Base getMapLayerById(String id) {
+    public Base getMapLayerById(String id) {
         ol.Collection<Base> layers = this.getLayers();
         for (int i = 0; i < layers.getLength(); i++) {
             Base item = layers.item(i);
