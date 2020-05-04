@@ -16,6 +16,7 @@ import org.dominokit.domino.ui.forms.SuggestBox;
 import org.dominokit.domino.ui.forms.SuggestBoxStore;
 import org.dominokit.domino.ui.forms.SuggestItem;
 import org.dominokit.domino.ui.icons.Icons;
+import org.dominokit.domino.ui.style.Color;
 import org.dominokit.domino.ui.style.ColorScheme;
 import org.dominokit.domino.ui.themes.Theme;
 import org.dominokit.domino.ui.utils.HasSelectionHandler.SelectionHandler;
@@ -173,6 +174,7 @@ public class AppEntryPoint implements EntryPoint {
 
         SuggestBox suggestBox = SuggestBox.create("Suche: Adressen und Orte", dynamicStore);
         suggestBox.setIcon(Icons.ALL.search());
+//        suggestBox.setHighlightColor(Color.RED);
         suggestBox.getInputElement().setAttribute("autocomplete", "off");
         suggestBox.getInputElement().setAttribute("spellcheck", "false");
         DropDownMenu suggestionsMenu = suggestBox.getSuggestionsMenu();
