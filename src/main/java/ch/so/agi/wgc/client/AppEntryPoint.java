@@ -175,6 +175,7 @@ public class AppEntryPoint implements EntryPoint {
         SuggestBox suggestBox = SuggestBox.create("Suche: Adressen und Orte", dynamicStore);
         suggestBox.setIcon(Icons.ALL.search());
 //        suggestBox.setHighlightColor(Color.RED);
+        suggestBox.setFocusColor(Color.RED);
         suggestBox.getInputElement().setAttribute("autocomplete", "off");
         suggestBox.getInputElement().setAttribute("spellcheck", "false");
         DropDownMenu suggestionsMenu = suggestBox.getSuggestionsMenu();
