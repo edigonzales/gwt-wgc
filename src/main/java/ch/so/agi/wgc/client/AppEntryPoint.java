@@ -27,7 +27,7 @@ import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-import ch.so.agi.wgc.client.element.BackgroundSwitcher;
+import ch.so.agi.wgc.client.ui.BackgroundSwitcher;
 import ch.so.agi.wgc.shared.BackgroundMapConfig;
 import ch.so.agi.wgc.shared.ConfigResponse;
 import ch.so.agi.wgc.shared.ConfigService;
@@ -106,6 +106,9 @@ public class AppEntryPoint implements EntryPoint {
                 .build();
         
         body().add(new BackgroundSwitcher(map, backgroundMapsConfig));
+        
+        
+        
         
         HTMLElement searchCard = div().id("SearchBox").element();
         body().add(searchCard);
@@ -276,13 +279,13 @@ public class AppEntryPoint implements EntryPoint {
                 double minY = event.getCoordinate().getY() - 50 * resolution;
                 double maxY = event.getCoordinate().getY() + 51 * resolution;
 
-                String baseUrlFeatureInfo = map.getBaseUrlFeatureInfo();
-                List<String> foregroundLayers = map.getForegroundLayers();
-                //console.log(foregroundLayers);
-                String layers = String.join(",", foregroundLayers);
-                String urlFeatureInfo = baseUrlFeatureInfo + "&layers=" + layers;
-                urlFeatureInfo += "&query_layers=" + layers;
-                urlFeatureInfo += "&bbox=" + minX + "," + minY + "," + maxX + "," + maxY;
+//                String baseUrlFeatureInfo = map.getBaseUrlFeatureInfo();
+//                List<String> foregroundLayers = map.getForegroundLayers();
+//                //console.log(foregroundLayers);
+//                String layers = String.join(",", foregroundLayers);
+//                String urlFeatureInfo = baseUrlFeatureInfo + "&layers=" + layers;
+//                urlFeatureInfo += "&query_layers=" + layers;
+//                urlFeatureInfo += "&bbox=" + minX + "," + minY + "," + maxX + "," + maxY;
                 
                 //console.log(urlFeatureInfo);
             }

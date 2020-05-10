@@ -27,18 +27,18 @@ app:
       url: https://geo.so.ch/api/wmts/1.0.0/{Layer}/default/2056/{TileMatrix}/{TileRow}/{TileCol}
       layer: ch.so.agi.hintergrundkarte_sw 
       active: false
-      thumbnail: img/hintergrund_sw.png
+      thumbnail: background_switcher/img/hintergrund_sw.png
     - id: ch.so.agi.hintergrundkarte_farbig
       title: Hintergrundkarte farbig    
       url: https://geo.so.ch/api/wmts/1.0.0/{Layer}/default/2056/{TileMatrix}/{TileRow}/{TileCol}
       layer: ch.so.agi.hintergrundkarte_farbig 
       active: false
-      thumbnail: img/hintergrund_farbig.png
+      thumbnail: background_switcher/img/hintergrund_farbig.png
     - id: ch.so.agi.hintergrundkarte_ortho
       title: Luftbild    
       url: https://geo.so.ch/api/wmts/1.0.0/{Layer}/default/2056/{TileMatrix}/{TileRow}/{TileCol}
       layer: ch.so.agi.hintergrundkarte_ortho 
       active: true
-      thumbnail: img/hintergrund_ortho.png
+      thumbnail: background_switcher/img/hintergrund_ortho.png
 
       

@@ -6,6 +6,7 @@ import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.filter.ForwardedHeaderFilter;
 
 import ch.so.agi.wgc.server.ConfigServiceImpl;
 
@@ -22,5 +23,10 @@ public class BootGwtApplication {
         ServletRegistrationBean bean = new ServletRegistrationBean(new ConfigServiceImpl(), "/module1/config");
         bean.setLoadOnStartup(1);
         return bean;
+    }
+    
+    @Bean
+    public ForwardedHeaderFilter forwardedHeaderFilter() {
+        return new ForwardedHeaderFilter();
     }
 }

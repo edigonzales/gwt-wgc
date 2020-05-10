@@ -1,4 +1,4 @@
-package ch.so.agi.wgc.client.element;
+package ch.so.agi.wgc.client.ui;
 
 import static org.jboss.elemento.Elements.a;
 import static org.jboss.elemento.Elements.body;
@@ -36,6 +36,10 @@ public class BackgroundSwitcher implements IsElement<HTMLElement>, Attachable {
     // TODO 
     // Soll möglichst viel in die Map-Klasse oder alles soweit wie möglich
     // nur im Config?
+    // Z.B. Thumbnail gehört eher nicht zur Map, sondern nur zur Config. 
+    // Sonst baut man in der Map die Config nach. Vor allem zieht das
+    // ja bei Layer Fäden, die auch alle erweitert werden müssten.
+    
     public BackgroundSwitcher(WgcMap map, List<BackgroundMapConfig> backgroundMapsConfig) {
         this.map = map;
         
@@ -44,24 +48,19 @@ public class BackgroundSwitcher implements IsElement<HTMLElement>, Attachable {
         
         Location location = DomGlobal.window.location;
         for (int i = 0; i < backgroundMapsConfig.size(); i++) {
-            String imageUrl = location.getProtocol() + "//" + location.getHost() + location.getPathname()
-                    + backgroundMapsConfig.get(i).getThumbnail();
-
+            String imageUrl = location.getProtocol() + "//" + location.getHost() + location.getPathname() + backgroundMapsConfig.get(i).getThumbnail();
             if (i != 0) {
                 root.appendChild(span().style("padding-left: 10px;").element());
             }
             HTMLImageElement image = img().on(click, event -> click(event)).id(backgroundMapsConfig.get(i).getId()).attr("src", imageUrl)
                     .attr("width", "60").css("background-layer-item").element();
             root.appendChild(image);
-
         }
         Attachable.register(this, this);
     }   
 
     @Override
-    public void attach(MutationRecord mutationRecord) {
-        console.log("BackgroundSwitcher has been attached");
-    }
+    public void attach(MutationRecord mutationRecord) {}
 
     @Override
     public HTMLElement element() {
@@ -73,7 +72,6 @@ public class BackgroundSwitcher implements IsElement<HTMLElement>, Attachable {
         if (handlerRegistration != null) {
             handlerRegistration.removeHandler();
         }
-        console.log("BackgroundSwitcher has been detached");        
     }
     
     private void click(Event ev) {

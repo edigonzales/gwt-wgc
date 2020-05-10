@@ -28,29 +28,28 @@ import ol.tilegrid.WmtsTileGridOptions;
 import proj4.Proj4;
 
 public class WgcMapBuilder {
-    private String BACKGROUND_LAYER_ATTR_NAME = "bgLayer";
-    private String THUMBNAIL_ATTR_NAME = "thumbnail";
     private String TITLE_ATTR_NAME = "title";
     private String ID_ATTR_NAME = "id";
-    
+    private String LAYER_TYPE_ATTR_NAME = "layerType";
+    private String BACKGROUND_LAYER_ATTR_VALUE = "background";
+    private String FOREGROUND_LAYER_ATTR_VALUE = "foreground";
+
     private Projection projection;
     private String mapId;
     private HashMap<String, Tile> backgroundLayers = new HashMap<String, Tile>();
     private String baseUrlWms = "https://geo.so.ch/api/wms"; // TODO -> config
     private String baseUrlFeatureInfo = "https://geo.so.ch/api/v1/featureinfo/somap?service=WMS&version=1.3.0"
             + "&request=GetFeatureInfo&x=51&y=51&i=51&j=51&height=101&width=101&srs=EPSG:2056&crs=EPSG:2056"
-            + "&info_format=text%2Fxml&with_geometry=true&with_maptip=false&feature_count=40&FI_POINT_TOLERANCE=16"
+            + "&info_format=text%2Fxml&with_geometry=true&with_maptip=false&feature_count=40&FI_POINT_TOLERANCE=8"
             + "&FI_LINE_TOLERANCE=8&FI_POLYGON_TOLERANCE=4"; // TODO -> config
     private String baseUrlBigMap = "https://geo.so.ch/map/"; // TODO -> config
     
     public WgcMapBuilder() {
         Proj4.defs("EPSG:2056", "+proj=somerc +lat_0=46.95240555555556 +lon_0=7.439583333333333 +k_0=1 +x_0=2600000 +y_0=1200000 +ellps=bessel +towgs84=674.374,15.056,405.346,0,0,0,0 +units=m +no_defs");
-        
         ProjectionOptions projectionOptions = OLFactory.createOptions();
         projectionOptions.setCode("EPSG:2056");
         projectionOptions.setUnits("m");
         projectionOptions.setExtent(new Extent(2420000, 1030000, 2900000, 1350000));
-
         projection = new Projection(projectionOptions);
     }
     
@@ -89,17 +88,16 @@ public class WgcMapBuilder {
             } else {
                 wmtsLayer.setVisible(false);
             }
-            wmtsLayer.set(BACKGROUND_LAYER_ATTR_NAME, true);
-            wmtsLayer.set(THUMBNAIL_ATTR_NAME, config.getThumbnail());
+            wmtsLayer.set(LAYER_TYPE_ATTR_NAME, BACKGROUND_LAYER_ATTR_VALUE);
             wmtsLayer.set(TITLE_ATTR_NAME, config.getTitle());
-            wmtsLayer.set(ID_ATTR_NAME, config.getId());
+            wmtsLayer.set(ID_ATTR_NAME, config.getId()); // TODO: Entscheiden, wie/was genau ID wird. Layername? Reicht natürlich nicht, falls man über die WMS-Servergrenzen hinaus denkt.
             
             backgroundLayers.put(config.getId(), wmtsLayer);
         }
         return this;
     }
     
-    // TODO "everything" must be configurable
+    // TODO: "everything" must be configurable
     public WgcMap build() {        
         ViewOptions viewOptions = OLFactory.createOptions();
         viewOptions.setProjection(projection);

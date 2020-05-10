@@ -21,4 +21,7 @@
     <source path="shared" />
     <entry-point class='ch.so.agi.wgc.client.AppEntryPoint' />
  
+    <inherits name="com.google.gwt.core.Core" />
+    <add-linker name="direct_install" />
+
 </module>
