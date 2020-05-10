@@ -119,7 +119,7 @@ public class AppEntryPoint implements EntryPoint {
         
         
         
-        
+        /* Search Box */
         HTMLElement searchCard = div().id("SearchBox").element();
         body().add(searchCard);
 
@@ -136,7 +136,10 @@ public class AppEntryPoint implements EntryPoint {
                 if (value.trim().length() == 0) {
                     return;
                 }
-                
+//                if (!suggestBox.isFocused()) {
+//                    suggestBox.getSuggestionsMenu().addOpenHandler(() ->  suggestBox.focus());
+//                }
+
                 RequestInit requestInit = RequestInit.create();
                 Headers headers = new Headers();
                 headers.append("Content-Type", "application/x-www-form-urlencoded"); // CORS and preflight...
@@ -201,13 +204,12 @@ public class AppEntryPoint implements EntryPoint {
                 if (searchValue == null) {
                     return;
                 }
+                
+                
                 HTMLInputElement el =(HTMLInputElement) suggestBox.getInputElement().element();
                 SearchResult searchResult = (SearchResult) searchValue;
                 SuggestItem<SearchResult> suggestItem = SuggestItem.create(searchResult, el.value);
                 handler.accept(suggestItem);
-                                
-                
-                DomGlobal.document.body.focus();
             }
         };
 
@@ -216,6 +218,9 @@ public class AppEntryPoint implements EntryPoint {
         suggestBox.setIcon(Icons.ALL.search());
         suggestBox.setAutoSelect(false);
         suggestBox.setFocusColor(Color.RED);
+        //suggestBox.getSuggestionsMenu().addOpenHandler(() ->  suggestBox.focus());
+        //suggestBox.getSuggestionsMenu().addCloseHandler(() ->  suggestBox.unfocus());
+
         suggestBox.getInputElement().setAttribute("autocomplete", "off");
         suggestBox.getInputElement().setAttribute("spellcheck", "false");
         DropDownMenu suggestionsMenu = suggestBox.getSuggestionsMenu();
@@ -237,7 +242,8 @@ public class AppEntryPoint implements EntryPoint {
                 double y = extent.getLowerLeftY() + extent.getHeight() / 2;
                 view.setCenter(new Coordinate(x,y));
                 
-                DomGlobal.document.body.focus();
+                suggestBox.getSuggestionsMenu().addCloseHandler(() ->  suggestBox.unfocus());
+
             }
         });
         
