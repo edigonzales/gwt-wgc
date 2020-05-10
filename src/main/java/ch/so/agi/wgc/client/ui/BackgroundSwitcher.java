@@ -33,13 +33,6 @@ public class BackgroundSwitcher implements IsElement<HTMLElement>, Attachable {
     private HandlerRegistration handlerRegistration;
     private WgcMap map;
     
-    // TODO 
-    // Soll möglichst viel in die Map-Klasse oder alles soweit wie möglich
-    // nur im Config?
-    // Z.B. Thumbnail gehört eher nicht zur Map, sondern nur zur Config. 
-    // Sonst baut man in der Map die Config nach. Vor allem zieht das
-    // ja bei Layer Fäden, die auch alle erweitert werden müssten.
-    
     public BackgroundSwitcher(WgcMap map, List<BackgroundMapConfig> backgroundMapsConfig) {
         this.map = map;
         

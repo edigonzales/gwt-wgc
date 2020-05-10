@@ -59,9 +59,6 @@ public class WgcMap extends ol.Map {
         return backgroundLayers;
     }
 
-    
-    
-    
 //    public void setVisibleBackgroundLayer(String id) {
 //        Base layer = this.getMapLayerById(id);
 //        if (layer != null) {

@@ -1,55 +1,76 @@
 package ch.so.agi.wgc.client;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class SearchResult implements Serializable {
-    private String label;
-    
-    private String origin;
-    
-    private String bbox;
-    
-    private double easting;
-    
-    private double northing;
+    private String display;
+    private String dataproductId;
+    private int featureId;
+    private String idFieldName;
+    private String egrid;
+    private List<Double> bbox;
+
+    public SearchResult() {
+    }
+
+    public SearchResult(String display) {
+        this.display = display;
+    }
 
     public String getLabel() {
-        return label;
+        return display;
     }
 
     public void setLabel(String label) {
-        this.label = label;
+        this.display = label;
     }
 
-    public String getOrigin() {
-        return origin;
+    public String getDisplay() {
+        return display;
     }
 
-    public void setOrigin(String origin) {
-        this.origin = origin;
+    public void setDisplay(String display) {
+        this.display = display;
     }
 
-    public String getBbox() {
+    public String getDataproductId() {
+        return dataproductId;
+    }
+
+    public void setDataproductId(String dataproductId) {
+        this.dataproductId = dataproductId;
+    }
+
+    public int getFeatureId() {
+        return featureId;
+    }
+
+    public void setFeatureId(int featureId) {
+        this.featureId = featureId;
+    }
+
+    public String getIdFieldName() {
+        return idFieldName;
+    }
+
+    public void setIdFieldName(String idFieldName) {
+        this.idFieldName = idFieldName;
+    }
+
+    public String getEgrid() {
+        return egrid;
+    }
+
+    public void setEgrid(String egrid) {
+        this.egrid = egrid;
+    }
+
+    public List<Double> getBbox() {
         return bbox;
     }
 
-    public void setBbox(String bbox) {
+    public void setBbox(List<Double> bbox) {
         this.bbox = bbox;
     }
-
-    public double getEasting() {
-        return easting;
-    }
-
-    public void setEasting(double easting) {
-        this.easting = easting;
-    }
-
-    public double getNorthing() {
-        return northing;
-    }
-
-    public void setNorthing(double northing) {
-        this.northing = northing;
-    } 
 }

@@ -15,10 +15,12 @@ import org.dominokit.domino.ui.dropdown.DropDownPosition;
 import org.dominokit.domino.ui.forms.SuggestBox;
 import org.dominokit.domino.ui.forms.SuggestBoxStore;
 import org.dominokit.domino.ui.forms.SuggestItem;
+import org.dominokit.domino.ui.icons.Icon;
 import org.dominokit.domino.ui.icons.Icons;
 import org.dominokit.domino.ui.style.Color;
 import org.dominokit.domino.ui.style.ColorScheme;
 import org.dominokit.domino.ui.themes.Theme;
+import org.dominokit.domino.ui.utils.HasChangeHandlers.ChangeHandler;
 import org.dominokit.domino.ui.utils.HasSelectionHandler.SelectionHandler;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -38,6 +40,9 @@ import elemental2.dom.DomGlobal;
 import elemental2.dom.Element;
 import elemental2.dom.EventListener;
 import elemental2.dom.HTMLElement;
+import elemental2.dom.HTMLInputElement;
+import elemental2.dom.Headers;
+import elemental2.dom.RequestInit;
 import elemental2.core.Global;
 import elemental2.core.JsArray;
 import elemental2.core.JsString;
@@ -51,9 +56,11 @@ import elemental2.dom.HTMLElement;
 import jsinterop.base.Js;
 import jsinterop.base.JsPropertyMap;
 import ol.Coordinate;
+import ol.Extent;
 import ol.Map;
 import ol.MapBrowserEvent;
 import ol.MapEvent;
+import ol.View;
 //import ol.events.Event;
 import ol.layer.Tile;
 
@@ -66,7 +73,8 @@ public class AppEntryPoint implements EntryPoint {
     private final ConfigServiceAsync configService = GWT.create(ConfigService.class);
     
     private List<BackgroundMapConfig> backgroundMapsConfig;
-    private String SEARCH_SERVICE_URL = "https://api3.geo.admin.ch/rest/services/api/SearchServer?sr=2056&limit=15&type=locations&origins=address,parcel&searchText=";
+//    private String SEARCH_SERVICE_URL = "https://api3.geo.admin.ch/rest/services/api/SearchServer?sr=2056&limit=15&type=locations&origins=address,parcel&searchText=";
+    private String SEARCH_SERVICE_URL = "https://geo.so.ch/api/search/v2/?filter=foreground,ch.so.agi.gemeindegrenzen,ch.so.agi.av.gebaeudeadressen.gebaeudeeingaenge,ch.so.agi.av.bodenbedeckung,ch.so.agi.av.grundstuecke.projektierte,ch.so.agi.av.grundstuecke.rechtskraeftig,ch.so.agi.av.nomenklatur.flurnamen,ch.so.agi.av.nomenklatur.gelaendenamen&searchtext=";    
 
     private NumberFormat fmtDefault = NumberFormat.getDecimalFormat();
     private NumberFormat fmtPercent = NumberFormat.getFormat("#0.0");
@@ -74,6 +82,8 @@ public class AppEntryPoint implements EntryPoint {
     private String MAP_DIV_ID = "map";
 
     private WgcMap map;
+    
+    SuggestBox suggestBox;
     
     public void onModuleLoad() {
         configService.configServer(new AsyncCallback<ConfigResponse>() {
@@ -127,9 +137,14 @@ public class AppEntryPoint implements EntryPoint {
                     return;
                 }
                 
-                // fetch(url, init) -> https://www.javadoc.io/doc/com.google.elemental2/elemental2-dom/1.0.0-RC1/elemental2/dom/RequestInit.html
-                // abort -> https://github.com/react4j/react4j-flux-challenge/blob/b9b28250fd3f954c690f874605f67e2a24a7274d/src/main/java/react4j/sithtracker/model/SithPlaceholder.java
-                DomGlobal.fetch(SEARCH_SERVICE_URL + value.trim().toLowerCase())
+                RequestInit requestInit = RequestInit.create();
+                Headers headers = new Headers();
+                headers.append("Content-Type", "application/x-www-form-urlencoded"); // CORS and preflight...
+                requestInit.setHeaders(headers);
+                
+                console.log(SEARCH_SERVICE_URL + value.trim().toLowerCase());
+
+                DomGlobal.fetch(SEARCH_SERVICE_URL + value.trim().toLowerCase(), requestInit)
                 .then(response -> {
                     if (!response.ok) {
                         return null;
@@ -141,20 +156,37 @@ public class AppEntryPoint implements EntryPoint {
                     JsPropertyMap<?> parsed = Js.cast(Global.JSON.parse(json));
                     JsArray<?> results = Js.cast(parsed.get("results"));
                     for (int i = 0; i < results.length; i++) {
-                        JsPropertyMap<?> feature = Js.cast(results.getAt(i));
-                        JsPropertyMap<?> attrs = Js.cast(feature.get("attrs"));
-
-                        SearchResult searchResult = new SearchResult();
-                        searchResult.setLabel(((JsString) attrs.get("label")).normalize());
-                        searchResult.setOrigin(((JsString) attrs.get("origin")).normalize());
-                        searchResult.setBbox(((JsString) attrs.get("geom_st_box2d")).normalize());
-                        searchResult.setEasting(((JsNumber) attrs.get("y")).valueOf());
-                        searchResult.setNorthing(((JsNumber) attrs.get("x")).valueOf());
+                        JsPropertyMap<?> resultObj = Js.cast(results.getAt(i));
+                                                
+                        if (resultObj.has("feature")) {
+                            JsPropertyMap feature = (JsPropertyMap) resultObj.get("feature");
+                            String display = ((JsString) feature.get("display")).normalize();
+                            String dataproductId = ((JsString) feature.get("dataproduct_id")).normalize();
+                            String idFieldName = ((JsString) feature.get("id_field_name")).normalize();
+                            int featureId = new Double(((JsNumber) feature.get("feature_id")).valueOf()).intValue();
+                            List<Double> bbox = ((JsArray) feature.get("bbox")).asList();
+ 
+                            SearchResult searchResult = new SearchResult();
+                            searchResult.setLabel(display);
+                            searchResult.setDataproductId(dataproductId);
+                            searchResult.setIdFieldName(idFieldName);
+                            searchResult.setFeatureId(featureId);
+                            searchResult.setBbox(bbox);
+                            
+                            Icon icon;
+                            if (dataproductId.contains("gebaeudeadressen")) {
+                                icon = Icons.ALL.mail_outline();
+                            } else if (dataproductId.contains("grundstueck")) {
+                                icon = Icons.ALL.home();
+                            } else {
+                                icon = Icons.ALL.place();
+                            }
+                            SuggestItem<SearchResult> suggestItem = SuggestItem.create(searchResult, searchResult.getLabel(), icon);
+                            suggestItems.add(suggestItem);
+                        }
                         
-//                      // TODO icon type depending on address and parcel ?
-                        SuggestItem<SearchResult> suggestItem = SuggestItem.create(searchResult, searchResult.getLabel(),
-                                Icons.ALL.place());
-                        suggestItems.add(suggestItem);
+                        // else if 'dataproduct'
+                        
                     }
                     suggestionsHandler.onSuggestionsReady(suggestItems);
                     return null;
@@ -169,15 +201,20 @@ public class AppEntryPoint implements EntryPoint {
                 if (searchValue == null) {
                     return;
                 }
+                HTMLInputElement el =(HTMLInputElement) suggestBox.getInputElement().element();
                 SearchResult searchResult = (SearchResult) searchValue;
-                SuggestItem<SearchResult> suggestItem = SuggestItem.create(searchResult, null);
+                SuggestItem<SearchResult> suggestItem = SuggestItem.create(searchResult, el.value);
                 handler.accept(suggestItem);
+                                
+                
+                DomGlobal.document.body.focus();
             }
         };
 
-        SuggestBox suggestBox = SuggestBox.create("Suche: Adressen und Orte", dynamicStore);
+        suggestBox = SuggestBox.create("Suche: Adressen und Orte", dynamicStore);
+        suggestBox.setId("SuggestBox");
         suggestBox.setIcon(Icons.ALL.search());
-//        suggestBox.setHighlightColor(Color.RED);
+        suggestBox.setAutoSelect(false);
         suggestBox.setFocusColor(Color.RED);
         suggestBox.getInputElement().setAttribute("autocomplete", "off");
         suggestBox.getInputElement().setAttribute("spellcheck", "false");
@@ -187,77 +224,26 @@ public class AppEntryPoint implements EntryPoint {
         suggestBox.addSelectionHandler(new SelectionHandler() {
             @Override
             public void onSelection(Object value) {
-//                loader.stop();
-//                resetGui();
-
+                // TODO: Wohl nur temporär, damit sich was bewegt. Die Geometrie
+                // des Objekte muss noch vom Dataservice bezogen werden.
                 SuggestItem<SearchResult> item = (SuggestItem<SearchResult>) value;
                 SearchResult result = (SearchResult) item.getValue();
+                List<Double> bbox = result.getBbox();                 
+                Extent extent = new Extent(bbox.get(0), bbox.get(1), bbox.get(2), bbox.get(3));
+                View view = map.getView();
+                double resolution = view.getResolutionForExtent(extent);
+                view.setZoom(Math.floor(view.getZoomForResolution(resolution)) - 1);
+                double x = extent.getLowerLeftX() + extent.getWidth() / 2;
+                double y = extent.getLowerLeftY() + extent.getHeight() / 2;
+                view.setCenter(new Coordinate(x,y));
                 
-                String[] coords = result.getBbox().substring(4,result.getBbox().length()-1).split(",");
-                String[] coordLL = coords[0].split(" ");
-                String[] coordUR = coords[1].split(" ");
-//                Extent extent = new Extent(Double.valueOf(coordLL[0]).doubleValue(), Double.valueOf(coordLL[1]).doubleValue(), 
-//                Double.valueOf(coordUR[0]).doubleValue(), Double.valueOf(coordUR[1]).doubleValue());
-//                
-//                double easting = Double.valueOf(result.getEasting()).doubleValue();
-//                double northing = Double.valueOf(result.getNorthing()).doubleValue();
-//                
-//                Coordinate coordinate = new Coordinate(easting, northing);
-//                sendCoordinateToServer(coordinate.toStringXY(3), null);
-                
-                // TODO: remove focus
-                // -> Tried a lot but failed. Ask the authors.
+                DomGlobal.document.body.focus();
             }
         });
-
+        
+    
         HTMLElement suggestBoxDiv = div().id("suggestBoxDiv").add(suggestBox).element();
         searchCard.appendChild(suggestBoxDiv);
-
-        
-        
-
-//        // TODO
-//        // Use elemental2: DomGlobal.window.location.getSearch()
-//        // new URLSearchParams() not available in RC1 (?)        
-//        String bgLayer = "";
-//        if (Window.Location.getParameter("bgLayer") != null) {
-//            bgLayer = Window.Location.getParameter("bgLayer").toString();
-//        } else {
-//            DomGlobal.window.alert("bgLayer missing");
-//            console.error("bgLayer missing");
-//            return;
-//        }
-//        List<String> layerList = new ArrayList<String>();
-//        if (Window.Location.getParameter("layers") != null) {
-//            String layers = Window.Location.getParameter("layers").toString();
-//            layerList = Arrays.asList(layers.split(",", -1));
-//        }
-//        List<Double> opacityList = new ArrayList<Double>();
-//        if (Window.Location.getParameter("layers_opacity") != null) {
-//            String opacities = Window.Location.getParameter("layers_opacity").toString();
-//            List<String> rawList = Arrays.asList(opacities.split(","));
-//            for(int i=0; i<rawList.size(); i++) {
-//                opacityList.add(Double.parseDouble(rawList.get(i)));
-//            }
-//        }
-//        if (Window.Location.getParameter("E") != null && Window.Location.getParameter("N") != null) {
-//            double easting = Double.valueOf(Window.Location.getParameter("E"));
-//            double northing = Double.valueOf(Window.Location.getParameter("N"));
-//            map.getView().setCenter(new Coordinate(easting,northing));
-//        }
-//        if (Window.Location.getParameter("zoom") != null) {
-//            map.getView().setZoom(Double.valueOf(Window.Location.getParameter("zoom")));
-//        }
-//
-//        map.setBackgroundLayer(bgLayer);
-//        
-//        for (int i=0; i<layerList.size(); i++) {
-//            map.addForegroundLayer(layerList.get(i), opacityList.get(i));
-//        }
-        
-        // TODO muss upgedated werden...
-//        BigMapLink bigMapLink = new BigMapLink(map);
-//        body().add(bigMapLink.element());
         
         // TODO getfeatureinfo
         // - url in config
