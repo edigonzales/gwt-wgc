@@ -136,9 +136,6 @@ public class AppEntryPoint implements EntryPoint {
                 if (value.trim().length() == 0) {
                     return;
                 }
-//                if (!suggestBox.isFocused()) {
-//                    suggestBox.getSuggestionsMenu().addOpenHandler(() ->  suggestBox.focus());
-//                }
 
                 RequestInit requestInit = RequestInit.create();
                 Headers headers = new Headers();
@@ -218,6 +215,7 @@ public class AppEntryPoint implements EntryPoint {
         suggestBox.setIcon(Icons.ALL.search());
         suggestBox.setAutoSelect(false);
         suggestBox.setFocusColor(Color.RED);
+        suggestBox.setFocusOnClose(false);
         //suggestBox.getSuggestionsMenu().addOpenHandler(() ->  suggestBox.focus());
         //suggestBox.getSuggestionsMenu().addCloseHandler(() ->  suggestBox.unfocus());
 
@@ -240,10 +238,7 @@ public class AppEntryPoint implements EntryPoint {
                 view.setZoom(Math.floor(view.getZoomForResolution(resolution)) - 1);
                 double x = extent.getLowerLeftX() + extent.getWidth() / 2;
                 double y = extent.getLowerLeftY() + extent.getHeight() / 2;
-                view.setCenter(new Coordinate(x,y));
-                
-                suggestBox.getSuggestionsMenu().addCloseHandler(() ->  suggestBox.unfocus());
-
+                view.setCenter(new Coordinate(x,y));                
             }
         });
         
