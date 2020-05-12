@@ -1,4 +1,4 @@
-package ch.so.agi.wgc.client;
+package ch.so.agi.wgc.client.ui;
 
 import java.io.Serializable;
 import java.util.List;

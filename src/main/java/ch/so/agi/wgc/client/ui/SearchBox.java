@@ -1,138 +1,69 @@
-package ch.so.agi.wgc.client;
+package ch.so.agi.wgc.client.ui;
 
 import static elemental2.dom.DomGlobal.console;
-import static org.jboss.elemento.Elements.*;
+import static org.jboss.elemento.Elements.body;
+import static org.jboss.elemento.Elements.div;
+import static org.jboss.elemento.Elements.img;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
-import org.dominokit.domino.ui.forms.SuggestBox.DropDownPositionDown;
 import org.dominokit.domino.ui.dropdown.DropDownMenu;
-import org.dominokit.domino.ui.dropdown.DropDownPosition;
 import org.dominokit.domino.ui.forms.SuggestBox;
 import org.dominokit.domino.ui.forms.SuggestBoxStore;
 import org.dominokit.domino.ui.forms.SuggestItem;
+import org.dominokit.domino.ui.forms.SuggestBox.DropDownPositionDown;
+import org.dominokit.domino.ui.forms.SuggestBoxStore.SuggestionsHandler;
 import org.dominokit.domino.ui.icons.Icon;
 import org.dominokit.domino.ui.icons.Icons;
 import org.dominokit.domino.ui.style.Color;
-import org.dominokit.domino.ui.style.ColorScheme;
-import org.dominokit.domino.ui.themes.Theme;
-import org.dominokit.domino.ui.utils.HasChangeHandlers.ChangeHandler;
 import org.dominokit.domino.ui.utils.HasSelectionHandler.SelectionHandler;
+import org.gwtproject.event.shared.HandlerRegistration;
+import org.jboss.elemento.Attachable;
+import org.jboss.elemento.IsElement;
 
-import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.i18n.client.NumberFormat;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 
-import ch.so.agi.wgc.client.ui.BackgroundSwitcher;
-import ch.so.agi.wgc.client.ui.SearchBox;
-import ch.so.agi.wgc.shared.BackgroundMapConfig;
-import ch.so.agi.wgc.shared.ConfigResponse;
-import ch.so.agi.wgc.shared.ConfigService;
-import ch.so.agi.wgc.shared.ConfigServiceAsync;
+import ch.so.agi.wgc.client.WgcMap;
 import elemental2.core.Global;
 import elemental2.core.JsArray;
+import elemental2.core.JsNumber;
+import elemental2.core.JsString;
 import elemental2.dom.DomGlobal;
-import elemental2.dom.Element;
-import elemental2.dom.EventListener;
 import elemental2.dom.HTMLElement;
 import elemental2.dom.HTMLInputElement;
 import elemental2.dom.Headers;
+import elemental2.dom.MutationRecord;
 import elemental2.dom.RequestInit;
-import elemental2.core.Global;
-import elemental2.core.JsArray;
-import elemental2.core.JsString;
-import elemental2.core.JsNumber;
-import elemental2.dom.CSSProperties;
-import elemental2.dom.DomGlobal;
-import elemental2.dom.Event;
-import elemental2.dom.EventListener;
-import elemental2.dom.HTMLDivElement;
-import elemental2.dom.HTMLElement;
 import jsinterop.base.Js;
 import jsinterop.base.JsPropertyMap;
 import ol.Coordinate;
 import ol.Extent;
-import ol.Map;
-import ol.MapBrowserEvent;
-import ol.MapEvent;
 import ol.View;
-//import ol.events.Event;
-import ol.layer.Tile;
 
-import static org.jboss.elemento.Elements.*;
-import static org.jboss.elemento.EventType.*;
-
-
-public class AppEntryPoint implements EntryPoint {
-    private MyMessages messages = GWT.create(MyMessages.class);
-    private final ConfigServiceAsync configService = GWT.create(ConfigService.class);
-    
-    private List<BackgroundMapConfig> backgroundMapsConfig;
-//    private String SEARCH_SERVICE_URL = "https://api3.geo.admin.ch/rest/services/api/SearchServer?sr=2056&limit=15&type=locations&origins=address,parcel&searchText=";
+public class SearchBox implements IsElement<HTMLElement>, Attachable {
+    // TODO config
     private String SEARCH_SERVICE_URL = "https://geo.so.ch/api/search/v2/?filter=foreground,ch.so.agi.gemeindegrenzen,ch.so.agi.av.gebaeudeadressen.gebaeudeeingaenge,ch.so.agi.av.bodenbedeckung,ch.so.agi.av.grundstuecke.projektierte,ch.so.agi.av.grundstuecke.rechtskraeftig,ch.so.agi.av.nomenklatur.flurnamen,ch.so.agi.av.nomenklatur.gelaendenamen&searchtext=";    
-
-    private NumberFormat fmtDefault = NumberFormat.getDecimalFormat();
-    private NumberFormat fmtPercent = NumberFormat.getFormat("#0.0");
-    
-    private String MAP_DIV_ID = "map";
-
+    private String DATA_SERVICE_URL = "https://geo.so.ch/api/data/v1/";
+            
+    private final HTMLElement root;
+    private HandlerRegistration handlerRegistration;
     private WgcMap map;
-    
-    SuggestBox suggestBox;
-    
-    public void onModuleLoad() {
-        configService.configServer(new AsyncCallback<ConfigResponse>() {
-            @Override
-            public void onFailure(Throwable caught) {
-                console.error(caught.getMessage());
-                DomGlobal.window.alert(caught.getMessage());
-            }
-
-            @Override
-            public void onSuccess(ConfigResponse result) {
-                backgroundMapsConfig = result.getBackgroundMaps();                
-                init();
-            }
-        });
-    }
+    private SuggestBox suggestBox;
 
     @SuppressWarnings("unchecked")
-    private void init() {      
-        console.log("init");
+    public SearchBox(WgcMap map) {
+        this.map = map;
         
-        Theme theme = new Theme(ColorScheme.RED);
-        theme.apply();
-
-        body().add(div().id(MAP_DIV_ID));
-
-        map = new WgcMapBuilder()
-                .setMapId(MAP_DIV_ID)
-                .addBackgroundLayers(backgroundMapsConfig)
-                .build();
-        
-        body().add(new BackgroundSwitcher(map, backgroundMapsConfig));
-        
-        body().add(new SearchBox(map));
-        
-        
-        /* Search Box */
-        /*
-        HTMLElement searchCard = div().id("SearchBox").element();
-        body().add(searchCard);
-
+        root = div().id("SearchBox").element();
         HTMLElement logoDiv = div().id("logoDiv")
                 .add(img()
                         .attr("src", GWT.getHostPageBaseURL() + "logo.png")
                         .attr("alt", "Logo Kanton Solothurn").attr("width", "50%"))
                 .element();
-        searchCard.appendChild(logoDiv);
-
+        root.appendChild(logoDiv);
+        
         SuggestBoxStore dynamicStore = new SuggestBoxStore() {
             @Override
             public void filter(String value, SuggestionsHandler suggestionsHandler) {
@@ -187,9 +118,7 @@ public class AppEntryPoint implements EntryPoint {
                             SuggestItem<SearchResult> suggestItem = SuggestItem.create(searchResult, searchResult.getLabel(), icon);
                             suggestItems.add(suggestItem);
                         }
-                        
                         // else if 'dataproduct'
-                        
                     }
                     suggestionsHandler.onSuggestionsReady(suggestItems);
                     return null;
@@ -204,8 +133,6 @@ public class AppEntryPoint implements EntryPoint {
                 if (searchValue == null) {
                     return;
                 }
-                
-                
                 HTMLInputElement el =(HTMLInputElement) suggestBox.getInputElement().element();
                 SearchResult searchResult = (SearchResult) searchValue;
                 SuggestItem<SearchResult> suggestItem = SuggestItem.create(searchResult, el.value);
@@ -224,14 +151,52 @@ public class AppEntryPoint implements EntryPoint {
         suggestBox.getInputElement().setAttribute("spellcheck", "false");
         DropDownMenu suggestionsMenu = suggestBox.getSuggestionsMenu();
         suggestionsMenu.setPosition(new DropDownPositionDown());
-        
+
         suggestBox.addSelectionHandler(new SelectionHandler() {
             @Override
             public void onSelection(Object value) {
-                // TODO: Wohl nur temporär, damit sich was bewegt. Die Geometrie
-                // des Objekte muss noch vom Dataservice bezogen werden.
                 SuggestItem<SearchResult> item = (SuggestItem<SearchResult>) value;
                 SearchResult result = (SearchResult) item.getValue();
+                
+                RequestInit requestInit = RequestInit.create();
+                Headers headers = new Headers();
+                headers.append("Content-Type", "application/x-www-form-urlencoded"); // CORS and preflight...
+                requestInit.setHeaders(headers);
+                
+                String dataproductId = result.getDataproductId();
+                String idFieldName = result.getIdFieldName();
+                String featureId = String.valueOf(result.getFeatureId());
+                
+                DomGlobal.fetch(DATA_SERVICE_URL + dataproductId + "/?filter=[[\""+idFieldName+"\",\"=\","+featureId+"]]", requestInit)
+                .then(response -> {
+                    if (!response.ok) {
+                        return null;
+                    }
+                    return response.text();
+                })
+                .then(json -> {
+                    List<SuggestItem<SearchResult>> suggestItems = new ArrayList<>();
+                    JsPropertyMap<?> parsed = Js.cast(Global.JSON.parse(json));
+                    
+                    // see: https://github.com/edigonzales/oereb-client-gwt/blob/master/src/main/java/ch/so/agi/oereb/webclient/client/AppEntryPoint.java#L1610
+                        
+//                    JsArray<?> results = Js.cast(parsed.get("results"));
+//                    for (int i = 0; i < results.length; i++) {
+//                        JsPropertyMap<?> resultObj = Js.cast(results.getAt(i));
+//                                                
+//     
+//                    }
+
+
+                    
+                    return null;
+                }).catch_(error -> {
+                    console.log(error);
+                    return null;
+                });
+                
+                
+                
                 List<Double> bbox = result.getBbox();                 
                 Extent extent = new Extent(bbox.get(0), bbox.get(1), bbox.get(2), bbox.get(3));
                 View view = map.getView();
@@ -242,73 +207,23 @@ public class AppEntryPoint implements EntryPoint {
                 view.setCenter(new Coordinate(x,y));                
             }
         });
-        
-    
         HTMLElement suggestBoxDiv = div().id("suggestBoxDiv").add(suggestBox).element();
-        searchCard.appendChild(suggestBoxDiv);
-        */
-        
-        
-        // TODO getfeatureinfo
-        // - url in config
-        // - Den Rest selber zusammenstöpseln (und berechnen).
-        // - fetch()
-        map.addClickListener(new ol.event.EventListener<MapBrowserEvent>() {
-            @Override
-            public void onEvent(MapBrowserEvent event) {
-                //console.log(event.getCoordinate().toString());
-                
-                double resolution = map.getView().getResolution();
-                //console.log(map.getView().getResolution());
+        root.appendChild(suggestBoxDiv);
+    }
+    
+    @Override
+    public void attach(MutationRecord mutationRecord) {}
 
-                // 50/51/101-Ansatz ist anscheinend bei OpenLayers normal.
-                // -> siehe baseUrlFeatureInfo resp. ein Original-Request
-                // im Web GIS Client.
-                double minX = event.getCoordinate().getX() - 50 * resolution;
-                double maxX = event.getCoordinate().getX() + 51 * resolution;
-                double minY = event.getCoordinate().getY() - 50 * resolution;
-                double maxY = event.getCoordinate().getY() + 51 * resolution;
-
-//                String baseUrlFeatureInfo = map.getBaseUrlFeatureInfo();
-//                List<String> foregroundLayers = map.getForegroundLayers();
-//                //console.log(foregroundLayers);
-//                String layers = String.join(",", foregroundLayers);
-//                String urlFeatureInfo = baseUrlFeatureInfo + "&layers=" + layers;
-//                urlFeatureInfo += "&query_layers=" + layers;
-//                urlFeatureInfo += "&bbox=" + minX + "," + minY + "," + maxX + "," + maxY;
-                
-                //console.log(urlFeatureInfo);
-            }
-        });        
-                
-//        map.addMoveEndListener(new ol.event.EventListener<MapEvent>() {
-//            @Override
-//            public void onEvent(MapEvent event) {
-//                ol.View view = map.getView();
-//                
-//                ol.Extent extent = view.calculateExtent(map.getSize());
-//                double easting = extent.getLowerLeftX() + (extent.getUpperRightX() - extent.getLowerLeftX()) / 2;
-//                double northing = extent.getLowerLeftY() + (extent.getUpperRightY() - extent.getLowerLeftY()) / 2;
-//                
-//                String newUrl = Window.Location.getProtocol() + "//" + Window.Location.getHost() + Window.Location.getPath();
-//                newUrl += "?bgLayer=" + map.getBackgroundLayer();
-//                newUrl += "&layers=" + String.join(",", map.getForegroundLayers());
-//                newUrl += "&layers_opacity=" + map.getForgroundLayerOpacities().stream().map(String::valueOf).collect(Collectors.joining(","));
-//                newUrl += "&E=" + String.valueOf(easting);
-//                newUrl += "&N=" + String.valueOf(northing);
-//                newUrl += "&zoom=" + String.valueOf(view.getZoom());
-//
-//                updateURLWithoutReloading(newUrl);
-//                
-//                Element bigMapLinkElement = DomGlobal.document.getElementById("bigMapLink");
-//                bigMapLinkElement.removeAttribute("href");
-//                bigMapLinkElement.setAttribute("href", map.createBigMapUrl());
-//            }
-//        });
-        
+    @Override
+    public HTMLElement element() {
+        return root;
+    }
+    
+    @Override
+    public void detach(MutationRecord mutationRecord) {
+        if (handlerRegistration != null) {
+            handlerRegistration.removeHandler();
+        }
     }
 
-   private static native void updateURLWithoutReloading(String newUrl) /*-{
-        $wnd.history.pushState(newUrl, "", newUrl);
-    }-*/;
 }
