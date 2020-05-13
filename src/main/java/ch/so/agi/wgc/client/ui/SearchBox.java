@@ -38,9 +38,16 @@ import elemental2.dom.MutationRecord;
 import elemental2.dom.RequestInit;
 import jsinterop.base.Js;
 import jsinterop.base.JsPropertyMap;
+import ol.Collection;
 import ol.Coordinate;
 import ol.Extent;
+import ol.Feature;
+import ol.FeatureOptions;
+import ol.OLFactory;
 import ol.View;
+import ol.format.GeoJson;
+import ol.style.Stroke;
+import ol.style.Style;
 
 public class SearchBox implements IsElement<HTMLElement>, Attachable {
     // TODO config
@@ -178,17 +185,26 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
                     List<SuggestItem<SearchResult>> suggestItems = new ArrayList<>();
                     JsPropertyMap<?> parsed = Js.cast(Global.JSON.parse(json));
                     
-                    // see: https://github.com/edigonzales/oereb-client-gwt/blob/master/src/main/java/ch/so/agi/oereb/webclient/client/AppEntryPoint.java#L1610
-                        
-//                    JsArray<?> results = Js.cast(parsed.get("results"));
-//                    for (int i = 0; i < results.length; i++) {
-//                        JsPropertyMap<?> resultObj = Js.cast(results.getAt(i));
-//                                                
-//     
-//                    }
+                    Feature[] features = (new GeoJson()).readFeatures(json);
 
-
+                    // TODO
+                    // andere Geometrietypen
                     
+                    FeatureOptions featureOptions = OLFactory.createOptions();
+                    featureOptions.setGeometry(features[0].getGeometry());
+                    Feature feature = new Feature(featureOptions);
+
+                    Style style = new Style();
+                    Stroke stroke = new Stroke();
+                    stroke.setWidth(8);
+                    stroke.setColor(new ol.color.Color(230, 0, 0, 0.6));
+                    style.setStroke(stroke);
+                    feature.setStyle(style);
+
+                    ol.source.Vector vectorSource = map.getHighlightLayer().getSource();
+                    vectorSource.clear(false); // false=opt_fast resp. eben nicht. Keine Events, falls true?
+                    vectorSource.addFeature(feature);
+
                     return null;
                 }).catch_(error -> {
                     console.log(error);

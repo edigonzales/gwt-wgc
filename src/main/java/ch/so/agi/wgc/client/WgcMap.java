@@ -13,6 +13,7 @@ import ol.MapOptions;
 import ol.OLFactory;
 import ol.layer.Base;
 import ol.layer.LayerOptions;
+import ol.layer.Vector;
 import ol.source.ImageWms;
 import ol.source.ImageWmsOptions;
 import ol.source.ImageWmsParams;
@@ -23,7 +24,7 @@ public class WgcMap extends ol.Map {
     private String LAYER_TYPE_ATTR_NAME = "layerType";
     private String BACKGROUND_LAYER_ATTR_VALUE = "background";
     private String FOREGROUND_LAYER_ATTR_VALUE = "foreground";
-    
+    private String HIGHLIGHT_ATTR_NAME = "highlight";
 
     private String baseUrlWms;
     private String baseUrlFeatureInfo;
@@ -52,11 +53,15 @@ public class WgcMap extends ol.Map {
         ol.Collection<Base> layers = this.getLayers();
         for (int i = 0; i < layers.getLength(); i++) {
             Base item = layers.item(i);
-            if (item.get(LAYER_TYPE_ATTR_NAME).toString().equalsIgnoreCase(BACKGROUND_LAYER_ATTR_VALUE)) {
+            if (item.get(LAYER_TYPE_ATTR_NAME) != null && item.get(LAYER_TYPE_ATTR_NAME).toString().equalsIgnoreCase(BACKGROUND_LAYER_ATTR_VALUE)) {
                 backgroundLayers.add(item.get(ID_ATTR_NAME));
             }
         }
         return backgroundLayers;
+    }
+    
+    public ol.layer.Vector getHighlightLayer() {
+        return (Vector) getMapLayerById(HIGHLIGHT_ATTR_NAME);
     }
 
 //    public void setVisibleBackgroundLayer(String id) {

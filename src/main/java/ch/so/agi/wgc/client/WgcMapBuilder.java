@@ -20,11 +20,15 @@ import ol.layer.LayerOptions;
 import ol.layer.Tile;
 import ol.proj.Projection;
 import ol.proj.ProjectionOptions;
+import ol.source.VectorOptions;
 import ol.source.Wmts;
 import ol.source.WmtsOptions;
 import ol.tilegrid.TileGrid;
 import ol.tilegrid.WmtsTileGrid;
 import ol.tilegrid.WmtsTileGridOptions;
+import ol.layer.VectorLayerOptions;
+import ol.source.Vector;
+import ol.source.VectorOptions;
 import proj4.Proj4;
 
 public class WgcMapBuilder {
@@ -33,6 +37,7 @@ public class WgcMapBuilder {
     private String LAYER_TYPE_ATTR_NAME = "layerType";
     private String BACKGROUND_LAYER_ATTR_VALUE = "background";
     private String FOREGROUND_LAYER_ATTR_VALUE = "foreground";
+    private String HIGHLIGHT_ATTR_NAME = "highlight";
 
     private Projection projection;
     private String mapId;
@@ -122,7 +127,22 @@ public class WgcMapBuilder {
         backgroundLayers.forEach((key, value) -> {      
             map.addLayer(value);
         });        
+        
+        map.addLayer(createHighlightLayer());
+        
         return map;
+    }
+    
+    private ol.layer.Vector createHighlightLayer() {
+        VectorOptions vectorSourceOptions = OLFactory.createOptions();
+        Vector vectorSource = new Vector(vectorSourceOptions);
+        
+        VectorLayerOptions vectorLayerOptions = OLFactory.createOptions();
+        vectorLayerOptions.setSource(vectorSource);
+        ol.layer.Vector vectorLayer = new ol.layer.Vector(vectorLayerOptions);
+        vectorLayer.set(ID_ATTR_NAME, HIGHLIGHT_ATTR_NAME);
+        
+        return vectorLayer;
     }
     
     private static TileGrid createWmtsTileGrid(Projection projection) {
