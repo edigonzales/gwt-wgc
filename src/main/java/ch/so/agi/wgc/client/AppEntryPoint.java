@@ -130,6 +130,10 @@ public class AppEntryPoint implements EntryPoint {
         map.addClickListener(new ol.event.EventListener<MapBrowserEvent>() {
             @Override
             public void onEvent(MapBrowserEvent event) {
+                ol.source.Vector vectorSource = map.getHighlightLayer().getSource();
+                vectorSource.clear(false);
+                
+                
                 //console.log(event.getCoordinate().toString());
                 
                 double resolution = map.getView().getResolution();

@@ -26,7 +26,7 @@ app:
       title: Hintergrundkarte schwarz-weiss
       url: https://geo.so.ch/api/wmts/1.0.0/{Layer}/default/2056/{TileMatrix}/{TileRow}/{TileCol}
       layer: ch.so.agi.hintergrundkarte_sw 
-      active: false
+      active: true
       thumbnail: background_switcher/img/hintergrund_sw.png
     - id: ch.so.agi.hintergrundkarte_farbig
       title: Hintergrundkarte farbig    
@@ -38,7 +38,7 @@ app:
       title: Luftbild    
       url: https://geo.so.ch/api/wmts/1.0.0/{Layer}/default/2056/{TileMatrix}/{TileRow}/{TileCol}
       layer: ch.so.agi.hintergrundkarte_ortho 
-      active: true
+      active: false
       thumbnail: background_switcher/img/hintergrund_ortho.png
 
       

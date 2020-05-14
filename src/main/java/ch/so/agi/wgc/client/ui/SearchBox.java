@@ -17,6 +17,7 @@ import org.dominokit.domino.ui.forms.SuggestBox.DropDownPositionDown;
 import org.dominokit.domino.ui.forms.SuggestBoxStore.SuggestionsHandler;
 import org.dominokit.domino.ui.icons.Icon;
 import org.dominokit.domino.ui.icons.Icons;
+import org.dominokit.domino.ui.icons.MdiIcon;
 import org.dominokit.domino.ui.style.Color;
 import org.dominokit.domino.ui.utils.HasSelectionHandler.SelectionHandler;
 import org.gwtproject.event.shared.HandlerRegistration;
@@ -31,6 +32,8 @@ import elemental2.core.JsArray;
 import elemental2.core.JsNumber;
 import elemental2.core.JsString;
 import elemental2.dom.DomGlobal;
+import elemental2.dom.Event;
+import elemental2.dom.EventListener;
 import elemental2.dom.HTMLElement;
 import elemental2.dom.HTMLInputElement;
 import elemental2.dom.Headers;
@@ -46,8 +49,11 @@ import ol.FeatureOptions;
 import ol.OLFactory;
 import ol.View;
 import ol.format.GeoJson;
+import ol.style.Circle;
+import ol.style.CircleOptions;
 import ol.style.Stroke;
 import ol.style.Style;
+import ol.style.StyleOptions;
 
 public class SearchBox implements IsElement<HTMLElement>, Attachable {
     // TODO config
@@ -98,7 +104,12 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
                     JsArray<?> results = Js.cast(parsed.get("results"));
                     for (int i = 0; i < results.length; i++) {
                         JsPropertyMap<?> resultObj = Js.cast(results.getAt(i));
-                                                
+                            
+                        // TODO sort by feature (sub-feature) and dataproduct
+                        // ah, durchmischt sind feature und dataproduct nie?
+                        
+                        // Grouping? https://github.com/DominoKit/domino-ui/blob/master/domino-ui/src/main/java/org/dominokit/domino/ui/forms/SelectOptionGroup.java#L25
+                        
                         if (resultObj.has("feature")) {
                             JsPropertyMap feature = (JsPropertyMap) resultObj.get("feature");
                             String display = ((JsString) feature.get("display")).normalize();
@@ -116,16 +127,32 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
                             
                             Icon icon;
                             if (dataproductId.contains("gebaeudeadressen")) {
-                                icon = Icons.ALL.mail_outline();
+                                icon = Icons.ALL.mail();
                             } else if (dataproductId.contains("grundstueck")) {
                                 icon = Icons.ALL.home();
+                            } else if (dataproductId.contains("flurname"))  {
+                                icon = Icons.ALL.terrain();
                             } else {
                                 icon = Icons.ALL.place();
                             }
+                            
+                            SuggestItem<SearchResult> suggestItem = SuggestItem.create(searchResult, searchResult.getLabel(), icon);
+                            suggestItems.add(suggestItem);
+                        } else if (resultObj.has("dataproduct")) {
+                            JsPropertyMap dataproduct = (JsPropertyMap) resultObj.get("dataproduct");
+                            String display = ((JsString) dataproduct.get("display")).normalize();
+                            SearchResult searchResult = new SearchResult();
+                            searchResult.setLabel(display);
+
+                            // TODO
+                            
+                            MdiIcon icon;
+                            icon = Icons.ALL.layers_mdi();
+                            icon = Icons.ALL.layers_plus_mdi();
+                            
                             SuggestItem<SearchResult> suggestItem = SuggestItem.create(searchResult, searchResult.getLabel(), icon);
                             suggestItems.add(suggestItem);
                         }
-                        // else if 'dataproduct'
                     }
                     suggestionsHandler.onSuggestionsReady(suggestItems);
                     return null;
@@ -147,18 +174,29 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
             }
         };
 
-        suggestBox = SuggestBox.create("Suche: Adressen und Orte", dynamicStore);
+        suggestBox = SuggestBox.create("Suche: Adressen, Orte und Karten", dynamicStore);
         suggestBox.setId("SuggestBox");
         suggestBox.setIcon(Icons.ALL.search());
         suggestBox.setAutoSelect(false);
         suggestBox.setFocusColor(Color.RED);
         suggestBox.setFocusOnClose(false);
+        suggestBox.setRightAddon(Icons.ALL.close().element()); // TODO deprecated and click event and mouse over cursor
+                
+        suggestBox.getInputElement().addEventListener("focus", new EventListener() {
+            @Override
+            public void handleEvent(Event evt) {
+                ol.source.Vector vectorSource = map.getHighlightLayer().getSource();
+                vectorSource.clear(false); 
+            }
+        });
+        
 
         suggestBox.getInputElement().setAttribute("autocomplete", "off");
         suggestBox.getInputElement().setAttribute("spellcheck", "false");
         DropDownMenu suggestionsMenu = suggestBox.getSuggestionsMenu();
         suggestionsMenu.setPosition(new DropDownPositionDown());
-
+        suggestionsMenu.setSearchable(false);
+        
         suggestBox.addSelectionHandler(new SelectionHandler() {
             @Override
             public void onSelection(Object value) {
@@ -187,31 +225,36 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
                     
                     Feature[] features = (new GeoJson()).readFeatures(json);
 
-                    // TODO
-                    // andere Geometrietypen
-                    
                     FeatureOptions featureOptions = OLFactory.createOptions();
                     featureOptions.setGeometry(features[0].getGeometry());
                     Feature feature = new Feature(featureOptions);
 
-                    Style style = new Style();
                     Stroke stroke = new Stroke();
                     stroke.setWidth(8);
                     stroke.setColor(new ol.color.Color(230, 0, 0, 0.6));
-                    style.setStroke(stroke);
-                    feature.setStyle(style);
+
+                    if (features[0].getGeometry().getType().equalsIgnoreCase("Point")) {
+                        CircleOptions circleOptions = new CircleOptions();
+                        circleOptions.setRadius(10);
+                        circleOptions.setStroke(stroke);
+                        StyleOptions styleOptions = new StyleOptions();
+                        styleOptions.setImage(new Circle(circleOptions));
+                        Style style = new Style(styleOptions);
+                        feature.setStyle(style);
+                    } else {
+                        Style style = new Style();
+                        style.setStroke(stroke);
+                        feature.setStyle(style);
+                    }
 
                     ol.source.Vector vectorSource = map.getHighlightLayer().getSource();
                     vectorSource.clear(false); // false=opt_fast resp. eben nicht. Keine Events, falls true?
                     vectorSource.addFeature(feature);
-
                     return null;
                 }).catch_(error -> {
                     console.log(error);
                     return null;
                 });
-                
-                
                 
                 List<Double> bbox = result.getBbox();                 
                 Extent extent = new Extent(bbox.get(0), bbox.get(1), bbox.get(2), bbox.get(3));

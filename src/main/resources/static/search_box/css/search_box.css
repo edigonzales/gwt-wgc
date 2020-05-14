@@ -33,3 +33,6 @@
     text-overflow: ellipsis !important;
 }
 
+.dropdown-menu  {
+    max-height: calc(100vh - 12em) !important; /* Einmal im Leben gar nichts verstehen */
+}
