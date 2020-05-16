@@ -10,6 +10,7 @@ public class SearchResult implements Serializable {
     private String idFieldName;
     private String egrid;
     private List<Double> bbox;
+    private String type;
 
     public SearchResult() {
     }
@@ -72,5 +73,13 @@ public class SearchResult implements Serializable {
 
     public void setBbox(List<Double> bbox) {
         this.bbox = bbox;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

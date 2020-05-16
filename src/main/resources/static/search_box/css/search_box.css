@@ -19,6 +19,10 @@
     padding: 10px;
 }
 
+#SearchResetIcon {
+	 cursor: pointer;
+}
+
 #suggestBoxDiv {
     padding: 10px;
 }

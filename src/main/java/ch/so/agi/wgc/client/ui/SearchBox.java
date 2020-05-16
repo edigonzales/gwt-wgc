@@ -6,6 +6,7 @@ import static org.jboss.elemento.Elements.div;
 import static org.jboss.elemento.Elements.img;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -37,6 +38,7 @@ import elemental2.dom.EventListener;
 import elemental2.dom.HTMLElement;
 import elemental2.dom.HTMLInputElement;
 import elemental2.dom.Headers;
+import elemental2.dom.KeyboardEvent;
 import elemental2.dom.MutationRecord;
 import elemental2.dom.RequestInit;
 import jsinterop.base.Js;
@@ -59,6 +61,8 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
     // TODO config
     private String SEARCH_SERVICE_URL = "https://geo.so.ch/api/search/v2/?filter=foreground,ch.so.agi.gemeindegrenzen,ch.so.agi.av.gebaeudeadressen.gebaeudeeingaenge,ch.so.agi.av.bodenbedeckung,ch.so.agi.av.grundstuecke.projektierte,ch.so.agi.av.grundstuecke.rechtskraeftig,ch.so.agi.av.nomenklatur.flurnamen,ch.so.agi.av.nomenklatur.gelaendenamen&searchtext=";    
     private String DATA_SERVICE_URL = "https://geo.so.ch/api/data/v1/";
+    private String DATAPRODUCT_SERVICE_URL = "https://geo.so.ch/api/dataproduct/v1/weblayers";
+    private String WMS_URL = "https://geo.so.ch/api/wms?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&FORMAT=image%2Fpng&TRANSPARENT=true&&STYLES=&SRS=EPSG%3A2056&CRS=EPSG%3A2056&TILED=false&DPI=96";
             
     private final HTMLElement root;
     private HandlerRegistration handlerRegistration;
@@ -83,7 +87,7 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
                 if (value.trim().length() == 0) {
                     return;
                 }
-
+                
                 RequestInit requestInit = RequestInit.create();
                 Headers headers = new Headers();
                 headers.append("Content-Type", "application/x-www-form-urlencoded"); // CORS and preflight...
@@ -99,6 +103,9 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
                     return response.text();
                 })
                 .then(json -> {
+                    List<SuggestItem<SearchResult>> featureResults = new ArrayList<SuggestItem<SearchResult>>();
+                    List<SuggestItem<SearchResult>> dataproductResults = new ArrayList<SuggestItem<SearchResult>>();
+
                     List<SuggestItem<SearchResult>> suggestItems = new ArrayList<>();
                     JsPropertyMap<?> parsed = Js.cast(Global.JSON.parse(json));
                     JsArray<?> results = Js.cast(parsed.get("results"));
@@ -109,6 +116,8 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
                         // ah, durchmischt sind feature und dataproduct nie?
                         
                         // Grouping? https://github.com/DominoKit/domino-ui/blob/master/domino-ui/src/main/java/org/dominokit/domino/ui/forms/SelectOptionGroup.java#L25
+                        
+                        
                         
                         if (resultObj.has("feature")) {
                             JsPropertyMap feature = (JsPropertyMap) resultObj.get("feature");
@@ -124,6 +133,7 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
                             searchResult.setIdFieldName(idFieldName);
                             searchResult.setFeatureId(featureId);
                             searchResult.setBbox(bbox);
+                            searchResult.setType("feature");
                             
                             Icon icon;
                             if (dataproductId.contains("gebaeudeadressen")) {
@@ -137,23 +147,39 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
                             }
                             
                             SuggestItem<SearchResult> suggestItem = SuggestItem.create(searchResult, searchResult.getLabel(), icon);
-                            suggestItems.add(suggestItem);
+                            featureResults.add(suggestItem);
+//                            suggestItems.add(suggestItem);                            
+                            
                         } else if (resultObj.has("dataproduct")) {
                             JsPropertyMap dataproduct = (JsPropertyMap) resultObj.get("dataproduct");
                             String display = ((JsString) dataproduct.get("display")).normalize();
+                            String dataproductId = ((JsString) dataproduct.get("dataproduct_id")).normalize();
+
                             SearchResult searchResult = new SearchResult();
                             searchResult.setLabel(display);
+                            searchResult.setDataproductId(dataproductId);
+                            searchResult.setType("dataproduct");
 
-                            // TODO
-                            
                             MdiIcon icon;
-                            icon = Icons.ALL.layers_mdi();
-                            icon = Icons.ALL.layers_plus_mdi();
+                            if (dataproduct.has("sublayers")) {
+                                icon = Icons.ALL.layers_plus_mdi();  
+                            } else {
+                                icon = Icons.ALL.layers_mdi();
+                            } 
                             
-                            SuggestItem<SearchResult> suggestItem = SuggestItem.create(searchResult, searchResult.getLabel(), icon);
-                            suggestItems.add(suggestItem);
+                            SuggestItem<SearchResult> suggestItem = SuggestItem.create(searchResult, searchResult.getLabel(), icon);                            
+                            dataproductResults.add(suggestItem);
+//                            suggestItems.add(suggestItem);
                         }
                     }
+//                    SearchResult featureGroup = new SearchResult();
+//                    featureGroup.setLabel("<b>Orte</b>");
+//                    SuggestItem<SearchResult> featureGroupItem = SuggestItem.create(featureGroup, featureGroup.getLabel(), null);                            
+//                    suggestItems.add(featureGroupItem);
+                    
+                    suggestItems.addAll(featureResults);
+                    suggestItems.addAll(dataproductResults);
+
                     suggestionsHandler.onSuggestionsReady(suggestItems);
                     return null;
                 }).catch_(error -> {
@@ -180,7 +206,20 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
         suggestBox.setAutoSelect(false);
         suggestBox.setFocusColor(Color.RED);
         suggestBox.setFocusOnClose(false);
-        suggestBox.setRightAddon(Icons.ALL.close().element()); // TODO deprecated and click event and mouse over cursor
+        
+        HTMLElement resetIcon = Icons.ALL.close().setId("SearchResetIcon").element();
+        resetIcon.addEventListener("click", new EventListener() {
+            @Override
+            public void handleEvent(Event evt) {
+                HTMLInputElement el =(HTMLInputElement) suggestBox.getInputElement().element();
+                el.value = "";
+                suggestBox.unfocus();
+                ol.source.Vector vectorSource = map.getHighlightLayer().getSource();
+                vectorSource.clear(false); 
+            }
+        });
+        
+        suggestBox.setRightAddon(resetIcon); // TODO deprecated
                 
         suggestBox.getInputElement().addEventListener("focus", new EventListener() {
             @Override
@@ -190,13 +229,23 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
             }
         });
         
+        // TODO open suggestionsMenu when clicking in suggestBox and some
+        // text is in there.
+//        suggestBox.getInputElement().addClickListener(new EventListener() {
+//            @Override
+//            public void handleEvent(Event evt) {
+//                console.log("click");
+//                KeyboardEvent event = new KeyboardEvent("keydown");
+//                suggestBox.element().dispatchEvent(event);
+//            }
+//        });
 
         suggestBox.getInputElement().setAttribute("autocomplete", "off");
         suggestBox.getInputElement().setAttribute("spellcheck", "false");
         DropDownMenu suggestionsMenu = suggestBox.getSuggestionsMenu();
         suggestionsMenu.setPosition(new DropDownPositionDown());
         suggestionsMenu.setSearchable(false);
-        
+                
         suggestBox.addSelectionHandler(new SelectionHandler() {
             @Override
             public void onSelection(Object value) {
@@ -208,62 +257,91 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
                 headers.append("Content-Type", "application/x-www-form-urlencoded"); // CORS and preflight...
                 requestInit.setHeaders(headers);
                 
-                String dataproductId = result.getDataproductId();
-                String idFieldName = result.getIdFieldName();
-                String featureId = String.valueOf(result.getFeatureId());
-                
-                DomGlobal.fetch(DATA_SERVICE_URL + dataproductId + "/?filter=[[\""+idFieldName+"\",\"=\","+featureId+"]]", requestInit)
-                .then(response -> {
-                    if (!response.ok) {
-                        return null;
-                    }
-                    return response.text();
-                })
-                .then(json -> {
-                    List<SuggestItem<SearchResult>> suggestItems = new ArrayList<>();
-                    JsPropertyMap<?> parsed = Js.cast(Global.JSON.parse(json));
+                if (result.getType().equalsIgnoreCase("feature")) {
+                    String dataproductId = result.getDataproductId();
+                    String idFieldName = result.getIdFieldName();
+                    String featureId = String.valueOf(result.getFeatureId());
                     
-                    Feature[] features = (new GeoJson()).readFeatures(json);
+                    DomGlobal.fetch(DATA_SERVICE_URL + dataproductId + "/?filter=[[\""+idFieldName+"\",\"=\","+featureId+"]]", requestInit)
+                    .then(response -> {
+                        if (!response.ok) {
+                            return null;
+                        }
+                        return response.text();
+                    })
+                    .then(json -> {
+                        Feature[] features = (new GeoJson()).readFeatures(json);
 
-                    FeatureOptions featureOptions = OLFactory.createOptions();
-                    featureOptions.setGeometry(features[0].getGeometry());
-                    Feature feature = new Feature(featureOptions);
+                        FeatureOptions featureOptions = OLFactory.createOptions();
+                        featureOptions.setGeometry(features[0].getGeometry());
+                        Feature feature = new Feature(featureOptions);
 
-                    Stroke stroke = new Stroke();
-                    stroke.setWidth(8);
-                    stroke.setColor(new ol.color.Color(230, 0, 0, 0.6));
+                        Stroke stroke = new Stroke();
+                        stroke.setWidth(8);
+                        stroke.setColor(new ol.color.Color(230, 0, 0, 0.6));
 
-                    if (features[0].getGeometry().getType().equalsIgnoreCase("Point")) {
-                        CircleOptions circleOptions = new CircleOptions();
-                        circleOptions.setRadius(10);
-                        circleOptions.setStroke(stroke);
-                        StyleOptions styleOptions = new StyleOptions();
-                        styleOptions.setImage(new Circle(circleOptions));
-                        Style style = new Style(styleOptions);
-                        feature.setStyle(style);
-                    } else {
-                        Style style = new Style();
-                        style.setStroke(stroke);
-                        feature.setStyle(style);
-                    }
+                        if (features[0].getGeometry().getType().equalsIgnoreCase("Point")) {
+                            CircleOptions circleOptions = new CircleOptions();
+                            circleOptions.setRadius(10);
+                            circleOptions.setStroke(stroke);
+                            StyleOptions styleOptions = new StyleOptions();
+                            styleOptions.setImage(new Circle(circleOptions));
+                            Style style = new Style(styleOptions);
+                            feature.setStyle(style);
+                        } else {
+                            Style style = new Style();
+                            style.setStroke(stroke);
+                            feature.setStyle(style);
+                        }
 
-                    ol.source.Vector vectorSource = map.getHighlightLayer().getSource();
-                    vectorSource.clear(false); // false=opt_fast resp. eben nicht. Keine Events, falls true?
-                    vectorSource.addFeature(feature);
-                    return null;
-                }).catch_(error -> {
-                    console.log(error);
-                    return null;
-                });
+                        ol.source.Vector vectorSource = map.getHighlightLayer().getSource();
+                        vectorSource.clear(false); // false=opt_fast resp. eben nicht. Keine Events, falls true?
+                        vectorSource.addFeature(feature);
+                        return null;
+                    }).catch_(error -> {
+                        console.log(error);
+                        return null;
+                    });
+                    
+                    // Zoom to feature.
+                    List<Double> bbox = result.getBbox();                 
+                    Extent extent = new Extent(bbox.get(0), bbox.get(1), bbox.get(2), bbox.get(3));
+                    View view = map.getView();
+                    double resolution = view.getResolutionForExtent(extent);
+                    view.setZoom(Math.floor(view.getZoomForResolution(resolution)) - 1);
+                    double x = extent.getLowerLeftX() + extent.getWidth() / 2;
+                    double y = extent.getLowerLeftY() + extent.getHeight() / 2;
+                    view.setCenter(new Coordinate(x,y));
+                } else if (result.getType().equalsIgnoreCase("dataproduct")) {
+                    String dataproductId = result.getDataproductId();
+                    DomGlobal.fetch(DATAPRODUCT_SERVICE_URL + "?filter=" + dataproductId, requestInit)
+                    .then(response -> {
+                        if (!response.ok) {
+                            return null;
+                        }
+                        return response.text();
+                    })
+                    .then(json -> {
+                        JsPropertyMap<?> parsed = Js.cast(Global.JSON.parse(json));                        
+                        JsPropertyMap<?> weblayer = (JsPropertyMap<?>) ((JsArray) parsed.get(dataproductId)).getAt(0);
+                        console.log(weblayer.get("name"));
+                        
+                        
+                        if (weblayer.has("sublayers")) {
+                            console.log("add layer group");
+
+                        } else {
+                            console.log("add single layer");
+                        }
+                        
+                        return null;
+                    }).catch_(error -> {
+                        console.log(error);
+                        return null;
+                    });
+
+                }
                 
-                List<Double> bbox = result.getBbox();                 
-                Extent extent = new Extent(bbox.get(0), bbox.get(1), bbox.get(2), bbox.get(3));
-                View view = map.getView();
-                double resolution = view.getResolutionForExtent(extent);
-                view.setZoom(Math.floor(view.getZoomForResolution(resolution)) - 1);
-                double x = extent.getLowerLeftX() + extent.getWidth() / 2;
-                double y = extent.getLowerLeftY() + extent.getHeight() / 2;
-                view.setCenter(new Coordinate(x,y));                
             }
         });
         HTMLElement suggestBoxDiv = div().id("suggestBoxDiv").add(suggestBox).element();
