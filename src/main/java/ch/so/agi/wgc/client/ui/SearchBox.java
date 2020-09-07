@@ -32,8 +32,11 @@ import elemental2.core.Global;
 import elemental2.core.JsArray;
 import elemental2.core.JsNumber;
 import elemental2.core.JsString;
+import elemental2.dom.CustomEvent;
+import elemental2.dom.CustomEventInit;
 import elemental2.dom.DomGlobal;
 import elemental2.dom.Event;
+import elemental2.dom.EventInit;
 import elemental2.dom.EventListener;
 import elemental2.dom.HTMLElement;
 import elemental2.dom.HTMLInputElement;
@@ -202,7 +205,7 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
 
         suggestBox = SuggestBox.create("Suche: Adressen, Orte und Karten", dynamicStore);
         suggestBox.setId("SuggestBox");
-        suggestBox.setIcon(Icons.ALL.search());
+        suggestBox.addLeftAddOn(Icons.ALL.search());
         suggestBox.setAutoSelect(false);
         suggestBox.setFocusColor(Color.RED);
         suggestBox.setFocusOnClose(false);
@@ -219,7 +222,7 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
             }
         });
         
-        suggestBox.setRightAddon(resetIcon); // TODO deprecated
+        suggestBox.addRightAddOn(resetIcon);
                 
         suggestBox.getInputElement().addEventListener("focus", new EventListener() {
             @Override
@@ -245,6 +248,11 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
         DropDownMenu suggestionsMenu = suggestBox.getSuggestionsMenu();
         suggestionsMenu.setPosition(new DropDownPositionDown());
         suggestionsMenu.setSearchable(false);
+        
+        suggestBox.addChangeHandler(e -> {
+
+ 
+        });
                 
         suggestBox.addSelectionHandler(new SelectionHandler() {
             @Override
@@ -333,6 +341,14 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
                         } else {
                             console.log("add single layer");
                         }
+                                  
+                        CustomEventInit eventInit = CustomEventInit.create();
+                        eventInit.setDetail("fubar");
+                        eventInit.setBubbles(true);
+                        CustomEvent event = new CustomEvent("saved", eventInit);
+                        root.dispatchEvent(event);
+
+                        
                         
                         return null;
                     }).catch_(error -> {

@@ -108,7 +108,7 @@ public class AppEntryPoint implements EntryPoint {
         
         Theme theme = new Theme(ColorScheme.RED);
         theme.apply();
-
+              
         body().add(div().id(MAP_DIV_ID));
 
         map = new WgcMapBuilder()
@@ -119,9 +119,6 @@ public class AppEntryPoint implements EntryPoint {
         body().add(new BackgroundSwitcher(map, backgroundMapsConfig));
         
         body().add(new SearchBox(map));
-        
-        
-        
         
         // TODO getfeatureinfo
         // - url in config
@@ -158,7 +155,33 @@ public class AppEntryPoint implements EntryPoint {
                 //console.log(urlFeatureInfo);
             }
         });        
+            
+        HTMLElement tocElement = div().id("toc").textContent("TOC").element();
+
+        tocElement.addEventListener("saved", new EventListener() {
+            @Override
+            public void handleEvent(Event evt) {
+                console.log("FUUUUUUBAR");
+            }
+        });
+        
+        
+        body().element().addEventListener("saved", new EventListener() {
+
+            @Override
+            public void handleEvent(Event evt) {
+                console.log("FUUUUUUBAR2");
                 
+            }
+            
+        });
+        
+        body().add(tocElement);
+
+        
+        
+        
+        
 //        map.addMoveEndListener(new ol.event.EventListener<MapEvent>() {
 //            @Override
 //            public void onEvent(MapEvent event) {
