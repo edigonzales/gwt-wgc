@@ -13,6 +13,7 @@
     height: 170px; 
     overflow-y: auto;
     max-width: calc(100% - 30px);
+    max-height: calc(100% - 30px);
 }
 
 #logoDiv {
@@ -39,4 +40,10 @@
 
 .dropdown-menu  {
     max-height: calc(100vh - 12em) !important; /* Einmal im Leben gar nichts verstehen */
+}
+
+.layer-panel {
+	color: #333333;
+	padding: 15px;
+	border-bottom: 1px solid rgb(233, 233, 233);
 }

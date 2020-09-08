@@ -8,6 +8,7 @@ import static org.jboss.elemento.Elements.img;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import org.dominokit.domino.ui.dropdown.DropDownMenu;
@@ -32,6 +33,9 @@ import elemental2.core.Global;
 import elemental2.core.JsArray;
 import elemental2.core.JsNumber;
 import elemental2.core.JsString;
+import elemental2.core.JsBoolean;
+import elemental2.dom.CSSProperties;
+import elemental2.dom.CSSProperties.HeightUnionType;
 import elemental2.dom.CustomEvent;
 import elemental2.dom.CustomEventInit;
 import elemental2.dom.DomGlobal;
@@ -248,12 +252,7 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
         DropDownMenu suggestionsMenu = suggestBox.getSuggestionsMenu();
         suggestionsMenu.setPosition(new DropDownPositionDown());
         suggestionsMenu.setSearchable(false);
-        
-        suggestBox.addChangeHandler(e -> {
 
- 
-        });
-                
         suggestBox.addSelectionHandler(new SelectionHandler() {
             @Override
             public void onSelection(Object value) {
@@ -337,6 +336,23 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
                         
                         if (weblayer.has("sublayers")) {
                             console.log("add layer group");
+                            
+                            // TODO: besser
+                            // Nur falls nicht bereits layer geladen sind.
+                            root.appendChild(div().style("border-bottom: 1px solid rgb(233, 233, 233);").element());
+                            
+                            JsArray<?> sublayers = Js.cast(weblayer.get("sublayers"));
+                            for(Object sublayerObj : sublayers.asList()) {
+                                JsPropertyMap<?> sublayer = Js.cast(sublayerObj);
+                                addLayer(sublayer);
+                            }
+                            // TODO: besser
+                            int height = root.clientHeight;
+                            height += 25;
+                            console.log(root.clientHeight);
+                            root.style.setProperty("height", String.valueOf(height) + "px"); 
+
+                            
 
                         } else {
                             console.log("add single layer");
@@ -377,6 +393,22 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
         if (handlerRegistration != null) {
             handlerRegistration.removeHandler();
         }
+    }
+    
+    public void addLayer(JsPropertyMap<?> layer) {
+        String name = ((JsString) layer.get("name")).normalize();
+        String title = ((JsString) layer.get("title")).normalize();
+        double opacity = ((JsNumber) layer.get("opacity")).valueOf();
+        boolean visibility = (boolean) layer.get("visibility");
+                
+        // TODO: nicht root direkt appenden
+        root.appendChild(div().css("layer-panel").id("layer-panel-"+name).textContent(title).element());
+        
+        int height = root.clientHeight;
+        height += 50;
+        console.log(root.clientHeight);
+        root.style.setProperty("height", String.valueOf(height) + "px"); 
+
     }
 
 }

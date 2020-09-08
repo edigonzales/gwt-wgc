@@ -156,27 +156,26 @@ public class AppEntryPoint implements EntryPoint {
             }
         });        
             
-        HTMLElement tocElement = div().id("toc").textContent("TOC").element();
-
-        tocElement.addEventListener("saved", new EventListener() {
-            @Override
-            public void handleEvent(Event evt) {
-                console.log("FUUUUUUBAR");
-            }
-        });
-        
-        
-        body().element().addEventListener("saved", new EventListener() {
-
-            @Override
-            public void handleEvent(Event evt) {
-                console.log("FUUUUUUBAR2");
-                
-            }
-            
-        });
-        
-        body().add(tocElement);
+//        HTMLElement tocElement = div().id("toc").textContent("TOC").element();
+//
+//        tocElement.addEventListener("saved", new EventListener() {
+//            @Override
+//            public void handleEvent(Event evt) {
+//                console.log("FUUUUUUBAR");
+//            }
+//        });
+//        
+//        
+//        body().element().addEventListener("saved", new EventListener() {
+//
+//            @Override
+//            public void handleEvent(Event evt) {
+//                console.log("FUUUUUUBAR2");
+//                
+//            }
+//        });
+//        
+//        body().add(tocElement);
 
         
         
