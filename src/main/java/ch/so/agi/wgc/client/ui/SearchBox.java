@@ -72,9 +72,12 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
     private String WMS_URL = "https://geo.so.ch/api/wms?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&FORMAT=image%2Fpng&TRANSPARENT=true&&STYLES=&SRS=EPSG%3A2056&CRS=EPSG%3A2056&TILED=false&DPI=96";
             
     private final HTMLElement root;
+    private HTMLElement layerPanelContainer;
     private HandlerRegistration handlerRegistration;
     private WgcMap map;
     private SuggestBox suggestBox;
+    
+    private int ROOT_HEIGHT_INIT;
 
     @SuppressWarnings("unchecked")
     public SearchBox(WgcMap map) {
@@ -87,7 +90,7 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
                         .attr("alt", "Logo Kanton Solothurn").attr("width", "50%"))
                 .element();
         root.appendChild(logoDiv);
-        
+
         SuggestBoxStore dynamicStore = new SuggestBoxStore() {
             @Override
             public void filter(String value, SuggestionsHandler suggestionsHandler) {
@@ -347,10 +350,10 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
                                 addLayer(sublayer);
                             }
                             // TODO: besser
-                            int height = root.clientHeight;
-                            height += 25;
-                            console.log(root.clientHeight);
-                            root.style.setProperty("height", String.valueOf(height) + "px"); 
+//                            int height = root.clientHeight;
+//                            height += 25;
+//                            console.log(root.clientHeight);
+//                            root.style.setProperty("height", String.valueOf(height) + "px"); 
 
                             
 
@@ -378,6 +381,9 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
         });
         HTMLElement suggestBoxDiv = div().id("suggestBoxDiv").add(suggestBox).element();
         root.appendChild(suggestBoxDiv);
+        
+        layerPanelContainer = div().id("layer-panel-container").element();
+        root.appendChild(layerPanelContainer);
     }
     
     @Override
@@ -399,15 +405,25 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
         String name = ((JsString) layer.get("name")).normalize();
         String title = ((JsString) layer.get("title")).normalize();
         double opacity = ((JsNumber) layer.get("opacity")).valueOf();
-        boolean visibility = (boolean) layer.get("visibility");
+        Boolean visibility = (Boolean) layer.get("visibility");
                 
         // TODO: nicht root direkt appenden
-        root.appendChild(div().css("layer-panel").id("layer-panel-"+name).textContent(title).element());
+        layerPanelContainer.appendChild(div().css("layer-panel").id("layer-panel-"+name).textContent(title).element());
         
-        int height = root.clientHeight;
-        height += 50;
-        console.log(root.clientHeight);
-        root.style.setProperty("height", String.valueOf(height) + "px"); 
+        // TODO layer-panel-container bekomme height von suggestbox minus anfangshöhe.
+        // ROOT_HEIGHT_INIT
+        
+        {
+//            int height = layerPanelContainer.clientHeight;
+//            height += 50;
+//            layerPanelContainer.style.setProperty("height", String.valueOf(height) + "px");  
+        }
+//        {
+//            int height = root.clientHeight;
+//            height += 50;
+//            root.style.setProperty("height", String.valueOf(height) + "px"); 
+//        }
+
 
     }
 
