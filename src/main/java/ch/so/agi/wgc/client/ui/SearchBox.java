@@ -77,7 +77,7 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
     private WgcMap map;
     private SuggestBox suggestBox;
     
-    private int ROOT_HEIGHT_INIT;
+    private int ROOT_HEIGHT_INIT = 0;
 
     @SuppressWarnings("unchecked")
     public SearchBox(WgcMap map) {
@@ -342,7 +342,8 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
                             
                             // TODO: besser
                             // Nur falls nicht bereits layer geladen sind.
-                            root.appendChild(div().style("border-bottom: 1px solid rgb(233, 233, 233);").element());
+                            
+                            //root.appendChild(div().style("border-bottom: 1px solid rgb(233, 233, 233);").element());
                             
                             JsArray<?> sublayers = Js.cast(weblayer.get("sublayers"));
                             for(Object sublayerObj : sublayers.asList()) {
@@ -384,6 +385,7 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
         
         layerPanelContainer = div().id("layer-panel-container").element();
         root.appendChild(layerPanelContainer);
+        
     }
     
     @Override
@@ -402,6 +404,10 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
     }
     
     public void addLayer(JsPropertyMap<?> layer) {
+        if (ROOT_HEIGHT_INIT == 0) {
+            ROOT_HEIGHT_INIT = root.clientHeight;
+        }
+        
         String name = ((JsString) layer.get("name")).normalize();
         String title = ((JsString) layer.get("title")).normalize();
         double opacity = ((JsNumber) layer.get("opacity")).valueOf();
@@ -414,15 +420,25 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
         // ROOT_HEIGHT_INIT
         
         {
-//            int height = layerPanelContainer.clientHeight;
-//            height += 50;
-//            layerPanelContainer.style.setProperty("height", String.valueOf(height) + "px");  
+            int height = root.clientHeight;
+            height += 50;
+            console.log(height);
+            root.style.setProperty("height", String.valueOf(height) + "px");
         }
-//        {
-//            int height = root.clientHeight;
-//            height += 50;
-//            root.style.setProperty("height", String.valueOf(height) + "px"); 
-//        }
+        {
+            int height = layerPanelContainer.clientHeight;
+            height += 50;
+            console.log(ROOT_HEIGHT_INIT);
+
+            if (height >= (root.clientHeight - ROOT_HEIGHT_INIT)) {
+                height = root.clientHeight - ROOT_HEIGHT_INIT;
+            } 
+            layerPanelContainer.style.setProperty("height", String.valueOf(height) + "px");  
+            
+            // TODO noch max height setzen.
+            // warum aber immer noch bissle mehr wheat ist, weiss ich nicht. Nur wenn noch kein scrollbar.
+        }
+
 
 
     }
