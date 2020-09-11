@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import org.dominokit.domino.ui.dropdown.DropDownMenu;
+import org.dominokit.domino.ui.forms.CheckBox;
 import org.dominokit.domino.ui.forms.SuggestBox;
 import org.dominokit.domino.ui.forms.SuggestBoxStore;
 import org.dominokit.domino.ui.forms.SuggestItem;
@@ -25,6 +26,9 @@ import org.dominokit.domino.ui.utils.HasSelectionHandler.SelectionHandler;
 import org.gwtproject.event.shared.HandlerRegistration;
 import org.jboss.elemento.Attachable;
 import org.jboss.elemento.IsElement;
+import static org.jboss.elemento.Elements.*;
+import static org.jboss.elemento.InputType.checkbox;
+import static org.jboss.elemento.InputType.text;
 
 import com.google.gwt.core.client.GWT;
 
@@ -386,6 +390,35 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
         layerPanelContainer = div().id("layer-panel-container").element();
         root.appendChild(layerPanelContainer);
         
+		DomGlobal.window.addEventListener("resize", new EventListener() {
+			@Override
+			public void handleEvent(Event evt) {
+				if (layerPanelContainer.scrollHeight > 0) {
+					int layerPanelContainerAbsoluteHeight = layerPanelContainer.scrollHeight;
+					int windowHeight = DomGlobal.window.innerHeight;
+					
+					if (layerPanelContainerAbsoluteHeight + ROOT_HEIGHT_INIT >= (windowHeight - 2*15)) {
+						int height = (windowHeight - 2*15);
+						root.style.setProperty("height", String.valueOf(height) + "px");
+					} else {
+						int height = layerPanelContainerAbsoluteHeight + ROOT_HEIGHT_INIT;
+						root.style.setProperty("height", String.valueOf(height) + "px");
+					}
+
+					if (layerPanelContainerAbsoluteHeight >= root.scrollHeight - ROOT_HEIGHT_INIT) {
+						// Eigentlich dachte ich, dass man scrollHeight verwenden kann. Aber irgendwie
+						// ist dieser Wert zu hoch. Als wäre er noch nicht upgedatet.
+						int height = root.clientHeight - ROOT_HEIGHT_INIT;
+						layerPanelContainer.style.setProperty("max-height", String.valueOf(height) + "px");
+						layerPanelContainer.style.setProperty("height", String.valueOf(height) + "px");
+					} else {
+						int height = layerPanelContainerAbsoluteHeight;
+						layerPanelContainer.style.setProperty("max-height", String.valueOf(height) + "px");
+						layerPanelContainer.style.setProperty("height", String.valueOf(height) + "px");
+					}
+				}
+			}
+		});
     }
     
     @Override
@@ -413,34 +446,27 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
         double opacity = ((JsNumber) layer.get("opacity")).valueOf();
         Boolean visibility = (Boolean) layer.get("visibility");
                 
-        // TODO: nicht root direkt appenden
-        layerPanelContainer.appendChild(div().css("layer-panel").id("layer-panel-"+name).textContent(title).element());
         
-        // TODO layer-panel-container bekomme height von suggestbox minus anfangshöhe.
-        // ROOT_HEIGHT_INIT
+        HTMLElement layerPanel = div().css("layer-panel").id("layer-panel-"+name).element();
         
+        layerPanel.appendChild(input(checkbox).id("toggle-all").style("vertical-align: middle;").element());
+        
+        layerPanelContainer.appendChild(layerPanel);
+                
         {
             int height = root.clientHeight;
             height += 50;
-            console.log(height);
             root.style.setProperty("height", String.valueOf(height) + "px");
         }
         {
             int height = layerPanelContainer.clientHeight;
             height += 50;
-            console.log(ROOT_HEIGHT_INIT);
 
             if (height >= (root.clientHeight - ROOT_HEIGHT_INIT)) {
                 height = root.clientHeight - ROOT_HEIGHT_INIT;
             } 
             layerPanelContainer.style.setProperty("height", String.valueOf(height) + "px");  
-            
-            // TODO noch max height setzen.
-            // warum aber immer noch bissle mehr wheat ist, weiss ich nicht. Nur wenn noch kein scrollbar.
+            layerPanelContainer.style.setProperty("max-height", String.valueOf(height) + "px");  
         }
-
-
-
     }
-
 }
