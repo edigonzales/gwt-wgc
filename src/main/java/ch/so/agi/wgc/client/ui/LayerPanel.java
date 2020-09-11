@@ -34,7 +34,7 @@ public class LayerPanel implements IsElement<HTMLElement>, Attachable {
                 //.addColumn(Column.span(4).appendChild(input(checkbox).id("toggle-all").style("vertical-align: middle;")))
                 .addColumn(Column.span(4).appendChild(CheckBox.create("Filled In").filledIn()))
                 .addColumn(Column.span(6).css("layer-panel-title").appendChild(span().textContent(title)))
-                .addColumn(Column.span(2).appendChild(Icons.ALL.trash_can_outline_mdi().size18()))
+                .addColumn(Column.span(2).appendChild(Icons.ALL.cancel()))
                 .element();
         root.appendChild(rowElement);
     }
