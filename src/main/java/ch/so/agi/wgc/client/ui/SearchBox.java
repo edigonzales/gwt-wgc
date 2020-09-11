@@ -448,10 +448,9 @@ public class SearchBox implements IsElement<HTMLElement>, Attachable {
                 
         
         HTMLElement layerPanel = div().css("layer-panel").id("layer-panel-"+name).element();
-        
         layerPanel.appendChild(input(checkbox).id("toggle-all").style("vertical-align: middle;").element());
         
-        layerPanelContainer.appendChild(layerPanel);
+        layerPanelContainer.appendChild(new LayerPanel(layer).element());
                 
         {
             int height = root.clientHeight;

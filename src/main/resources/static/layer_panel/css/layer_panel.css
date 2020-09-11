@@ -1,0 +1,17 @@
+.layer-panel {
+    font-size: 14px;
+    color: #333333;
+    padding: 15px;
+    border-bottom: 1px solid rgb(233,233,233);
+    line-height: 20px;
+    height: 50px;    
+}
+
+.layer-panel-title {
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.layer-panel-row {
+	height: 20px;
+}
+
