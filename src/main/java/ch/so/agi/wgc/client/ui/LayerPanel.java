@@ -30,13 +30,21 @@ public class LayerPanel implements IsElement<HTMLElement>, Attachable {
 
         root = div().css("layer-panel").id("layer-panel-"+name).element();
         
-        HTMLElement rowElement = Row.create().css("layer-panel-row")
+        HTMLElement spanElement = span().css("layer-panel-span").element();
+        HTMLElement rowElement = Row.create()
                 //.addColumn(Column.span(4).appendChild(input(checkbox).id("toggle-all").style("vertical-align: middle;")))
-                .addColumn(Column.span(4).appendChild(CheckBox.create("Filled In").filledIn()))
-                .addColumn(Column.span(6).css("layer-panel-title").appendChild(span().textContent(title)))
-                .addColumn(Column.span(2).appendChild(Icons.ALL.cancel()))
+                .addColumn(Column.span(12).appendChild(CheckBox.create("Filled In").filledIn()))
+                //.addColumn(Column.span(10).css("layer-panel-title").appendChild(span().textContent(title)))
+//                .addColumn(Column.span(2).appendChild(Icons.ALL.cancel()))
                 .element();
-        root.appendChild(rowElement);
+        spanElement.appendChild(rowElement);
+        
+//        HTMLElement checkBoxElement = span().css("layer-panel-span").add(CheckBox.create("Filled In").filledIn()).element();
+//        HTMLElement checkBoxElement = span().css("layer-panel-span").add(input(checkbox).id("toggle-all")).element();
+//        HTMLElement textElement = span().css("layer-panel-span").textContent(title).element();
+        
+//        spanElement.appendChild(checkBoxElement).appendChild(textElement);
+        root.appendChild(spanElement);
     }
     
     @Override
